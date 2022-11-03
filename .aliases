@@ -1,0 +1,13 @@
+alias rls=". /home/$USER/.zshrc"
+
+# ASCII characters
+alias ascii="awk 'BEGIN{for(i=32;i<127;i++)printf \"%c\",i; print}'"
+
+# AWS usable ASCII characters (do not include ''', '"', ' ', '@', '\', '/' )
+alias asciiaws="awk 'BEGIN{for(i=32;i<127;i++)printf \"%c\",i; print}'|sed 's%[ @\"'\'']%%g'"
+
+# Generate random AWS usable password, default 16 characters
+randpwaws(){ < /dev/urandom tr -dc $(asciiaws) | head -c${1:-16};echo;}
+
+# Generate random password
+randpwnormal(){ < /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-16};echo;}

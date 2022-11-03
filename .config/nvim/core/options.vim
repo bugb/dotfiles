@@ -1,0 +1,46 @@
+scriptencoding utf-8
+
+" this will install vim-plug if not installed
+if empty(glob('~/.config/nvim/autoload/plug.vim'))
+   silent !curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs
+        \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+   autocmd VimEnter * PlugInstall
+endif
+    
+call plug#begin()
+" Neovim plugins: 
+    
+call plug#end()
+
+" Editor config
+set encoding=UTF-8
+set number
+syntax on
+filetype plugin indent on
+set tabstop=2 softtabstop=2 shiftwidth=2 expandtab
+set number relativenumber
+set noswapfile
+" Ignore case in search but case-sensitive when uppercase is present
+set ignorecase smartcase
+
+set linebreak
+set showbreak=↪
+
+set noshowmode
+set fileformats=unix,dos
+
+set visualbell noerrorbells  " Do not use visual and errorbells
+set history=300  " The number of command and search history to keep
+set title
+set titlestring=
+set titlestring=%{utils#Get_titlestr()}
+" Tab / Shift Tab to navigate between tabs
+" nnoremap <Tab> :tabnext<CR>
+" nnoremap <S-Tab> :tabprevious<CR>
+
+set termguicolors
+
+if !empty(provider#clipboard#Executable())
+  set clipboard+=unnamedplus
+endif
+

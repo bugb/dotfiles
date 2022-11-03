@@ -1,0 +1,11 @@
+/*
+!.gitignore
+!/.config
+.config/*
+!.config/nvim/
+!.config/vscode
+!.config/i3/
+!/.config/kitty
+.config/kitty/*
+!.config/kitty/kitty.conf
+!.aliases
