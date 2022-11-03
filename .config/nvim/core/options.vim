@@ -34,9 +34,6 @@ set history=300  " The number of command and search history to keep
 set title
 set titlestring=
 set titlestring=%{utils#Get_titlestr()}
-" Tab / Shift Tab to navigate between tabs
-" nnoremap <Tab> :tabnext<CR>
-" nnoremap <S-Tab> :tabprevious<CR>
 
 set termguicolors
 
