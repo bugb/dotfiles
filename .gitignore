@@ -3,6 +3,7 @@
 !/.config
 .config/*
 !.config/nvim/
+.config/nvim/plugin/packer_compiled.lua
 !.config/vscode
 !.config/i3/
 !/.config/kitty
