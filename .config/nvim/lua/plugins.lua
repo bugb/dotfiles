@@ -44,10 +44,22 @@ packer.init({
 packer.startup(function()
 
   local use = use
-  -- use 'nvim-treesitter/nvim-treesitter'
+  use 'nvim-treesitter/nvim-treesitter'
   use {'andymass/vim-matchup', event = 'VimEnter'}
 
   -- Snippet engine and snippet template
   use {'SirVer/ultisnips'}
+  
+  use { "onsails/lspkind-nvim", event = "VimEnter" }
+  -- auto-completion engine
+  use { "hrsh7th/nvim-cmp", after = "lspkind-nvim", config = [[require('config.nvim-cmp')]] }
+
+  -- nvim-cmp completion sources
+  use { "hrsh7th/cmp-nvim-lsp", after = "nvim-cmp" }
+  use { "hrsh7th/cmp-path", after = "nvim-cmp" }
+  use { "hrsh7th/cmp-buffer", after = "nvim-cmp" }
+  use { "hrsh7th/cmp-omni", after = "nvim-cmp" }
+  use { "quangnguyen30192/cmp-nvim-ultisnips", after = { "nvim-cmp", "ultisnips" } }
+  use { "neovim/nvim-lspconfig", after = "cmp-nvim-lsp", config = [[require('config.lsp')]] }
   end
 )
