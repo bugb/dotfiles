@@ -1,4 +1,4 @@
-alias rls=". /home/$USER/.zshrc"
+alias rls=". /home/$USER/.zshrc && tmux source-file /home/$USER/.tmux.conf || true"
 
 # ASCII characters
 alias ascii="awk 'BEGIN{for(i=32;i<127;i++)printf \"%c\",i; print}'"

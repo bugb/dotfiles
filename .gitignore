@@ -10,3 +10,4 @@
 .config/kitty/*
 !.config/kitty/kitty.conf
 !.aliases
+!.zshrc
