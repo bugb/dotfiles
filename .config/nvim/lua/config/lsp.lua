@@ -119,9 +119,22 @@ if utils.executable("pylsp") then
     capabilities = capabilities,
   }
 else
-  vim.notify("pylsp not found!", vim.log.levels.WARN, { title = "Nvim-config" })
+  vim.notify("pylsp not found!", vim.log.levels.WARN, { title = "Nvim LSP config" })
 end
 
+if utils.executable("typescript-language-server") then
+  lspconfig.tsserver.setup {
+    on_attach = custom_attach,
+    settings = {
+    },
+    flags = {
+      debounce_text_changes = 200,
+    },
+    capabilities = capabilities,
+  }
+else
+  vim.notify("typescript-language-server not found", vim.log.levels.WARN, { title = "Nvim LSP config" })
+end
 -- if utils.executable('pyright') then
 --   lspconfig.pyright.setup{
 --     on_attach = custom_attach,
