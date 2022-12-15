@@ -5,7 +5,7 @@ local lsp = vim.lsp
 local diagnostic = vim.diagnostic
 
 local utils = require("utils")
-
+local lsp_util = require "lspconfig/util"
 local custom_attach = function(client, bufnr)
   -- Mappings.
   local map = function(mode, l, r, opts)
@@ -119,7 +119,7 @@ if utils.executable("pylsp") then
     capabilities = capabilities,
   }
 else
-  vim.notify("pylsp not found!", vim.log.levels.WARN, { title = "Nvim LSP config" })
+  vim.notify("pylsp not found!", vim.log.levels.WARN, { title = "Nvim LSP config for Python" })
 end
 
 if utils.executable("typescript-language-server") then
@@ -133,7 +133,30 @@ if utils.executable("typescript-language-server") then
     capabilities = capabilities,
   }
 else
-  vim.notify("typescript-language-server not found", vim.log.levels.WARN, { title = "Nvim LSP config" })
+  vim.notify("typescript-language-server not found", vim.log.levels.WARN, { title = "Nvim LSP config for Nodejs/Javascript" })
+end
+
+if utils.executable("gopls") then
+  lspconfig.gopls.setup {
+    cmd = {"gopls", "serve"},
+    filetypes = {"go", "gomod"},
+    root_dir = lsp_util.root_pattern("go.work", "go.mod", ".git"),
+    on_attach = custom_attach,
+    settings = {
+      gopls = {
+        analyses = {
+          unusedparams = true,
+        },
+        staticcheck = true,
+      },
+    },
+    flags = {
+      debounce_text_changes = 200,
+    },
+    capabilities = capabilities,
+  }
+else
+  vim.notify("Gopls not found", vim.log.levels.WARN, { title = "Nvim LSP config for Go" })
 end
 -- if utils.executable('pyright') then
 --   lspconfig.pyright.setup{
