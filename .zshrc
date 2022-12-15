@@ -49,10 +49,14 @@ bindkey '^R' history-incremental-search-backward
 
 bindkey -e
 
-export PATH="$PATH:/home/kai/.local/bin"
+export PATH="$PATH:/home/$USER/.local/bin"
 export NPM_CONFIG_PREFIX=~/.npm-global
 export PATH=$PATH:~/.npm-global/bin
 
+export GOPATH="$HOME/go"
+export GOBIN="$HOME/go/bin"
+export GOROOT="/usr/lib/go"
+export PATH="$PATH:$GOBIN:$GOROOT/bin"
 
 autoload -U up-line-or-beginning-search
 autoload -U down-line-or-beginning-search
