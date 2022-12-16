@@ -61,5 +61,9 @@ packer.startup(function()
   use { "hrsh7th/cmp-omni", after = "nvim-cmp" }
   use { "quangnguyen30192/cmp-nvim-ultisnips", after = { "nvim-cmp", "ultisnips" } }
   use { "neovim/nvim-lspconfig", after = "cmp-nvim-lsp", config = [[require('config.lsp')]] }
+  use({
+    "iamcco/markdown-preview.nvim",
+     run = function() vim.fn["mkdp#util#install"]() end,
+  })
   end
 )
