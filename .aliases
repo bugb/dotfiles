@@ -11,3 +11,4 @@ randpwaws(){ < /dev/urandom tr -dc $(asciiaws) | head -c${1:-16};echo;}
 
 # Generate random password
 randpwnormal(){ < /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-16};echo;}
+

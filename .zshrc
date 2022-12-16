@@ -68,3 +68,10 @@ bindkey "^[[B" down-line-or-beginning-search
 
 bindkey "^[[1;5C" forward-word
 bindkey "^[[1;5D" backward-word
+
+export ZSH="$HOME/.oh-my-zsh"
+source $ZSH/oh-my-zsh.sh
+
+plugins=(git)
+
+
