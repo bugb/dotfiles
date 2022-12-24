@@ -65,5 +65,14 @@ packer.startup(function()
     "iamcco/markdown-preview.nvim",
      run = function() vim.fn["mkdp#util#install"]() end,
   })
+  --use { "vijaymarupudi/nvim-fzf" }
+  --use { "vijaymarupudi/nvim-fzf-commands" }
+  use {
+    'nvim-telescope/telescope.nvim', tag = '0.1.0',
+    requires = { {'nvim-lua/plenary.nvim'} }
+  }
+  use { "tpope/vim-fugitive" }
+  use { "ray-x/guihua.lua", after = "vim-fugitive" }
+  use { "ray-x/forgit.nvim", after = "vim-fugitive", config = [[require('config.nvim-forgit')]] }
   end
 )
