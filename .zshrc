@@ -69,10 +69,10 @@ bindkey "^[[B" down-line-or-beginning-search
 bindkey "^[[1;5C" forward-word
 bindkey "^[[1;5D" backward-word
 
+plugins=(git)
 export ZSH="$HOME/.oh-my-zsh"
 . $ZSH/oh-my-zsh.sh
 
-plugins=(git)
 
 
 ### Added by Zinit's installer
