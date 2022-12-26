@@ -41,6 +41,14 @@ if !empty(provider#clipboard#Executable())
   set clipboard+=unnamedplus
 endif
 
+function! SearchHlClear()
+    let @/ = ''
+endfunction
+augroup searchhighlight
+    autocmd!
+    autocmd CursorHold,CursorHoldI * call SearchHlClear()
+augroup end
+
 " " Copy to clipboard
 "vnoremap  <leader>y  "+y
 "nnoremap  <leader>Y  "+yg_
