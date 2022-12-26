@@ -7,6 +7,9 @@ local defaults = { noremap = true, silent = true }
 -- Keys notation table:
 -- https://neovim.io/doc/user/intro.html#key-notation
 
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+set.termguicolors = true
 --unmap Ctrl + q
 map("n", "<C-q>", "", defaults)
 
@@ -105,6 +108,9 @@ map('n', '<M-l>', 'guiww', defaults)
 -- Shift + Up/Down to move line up/down
 map('n', '<S-Up>', 'yyddkP', defaults)
 map('n', '<S-Down>', 'yyddp', defaults)
+
+-- Keymaps for Nvim tree
+map('n', '<leader>e', ':NvimTreeToggle<cr>', defaults)
 
 ---- Do some magic with autocmd
 -- Remove trailing space

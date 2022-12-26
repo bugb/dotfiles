@@ -35,7 +35,7 @@ vim.cmd("packadd packer.nvim")
 
 local packer = require("packer")
 local packer_util = require("packer.util")
-    
+
 packer.init({
   package_root = packer_util.join_paths(fn.stdpath('data'), 'site', 'pack')
 })
@@ -49,7 +49,7 @@ packer.startup(function()
 
   -- Snippet engine and snippet template
   use {'SirVer/ultisnips'}
-  
+
   use { "onsails/lspkind-nvim", event = "VimEnter" }
   -- auto-completion engine
   use { "hrsh7th/nvim-cmp", after = "lspkind-nvim", config = [[require('config.nvim-cmp')]] }
@@ -63,7 +63,7 @@ packer.startup(function()
   use { "neovim/nvim-lspconfig", after = "cmp-nvim-lsp", config = [[require('config.lsp')]] }
   use({
     "iamcco/markdown-preview.nvim",
-     run = function() vim.fn["mkdp#util#install"]() end,
+    run = function() vim.fn["mkdp#util#install"]() end,
   })
   --use { "vijaymarupudi/nvim-fzf" }
   --use { "vijaymarupudi/nvim-fzf-commands" }
@@ -74,5 +74,12 @@ packer.startup(function()
   use { "tpope/vim-fugitive" }
   use { "ray-x/guihua.lua", after = "vim-fugitive" }
   use { "ray-x/forgit.nvim", after = "vim-fugitive", config = [[require('config.nvim-forgit')]] }
+  use {
+    'nvim-tree/nvim-tree.lua',
+    requires = {
+      'nvim-tree/nvim-web-devicons', -- optional, for file icons
+    },
+    config = [[require('config.nvim-tree')]],
+  }
   end
 )
