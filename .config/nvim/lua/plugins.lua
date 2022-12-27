@@ -81,5 +81,6 @@ packer.startup(function()
     },
     config = [[require('config.nvim-tree')]],
   }
+  use { "dstein64/vim-startuptime" }
   end
 )
