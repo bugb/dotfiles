@@ -82,5 +82,10 @@ packer.startup(function()
     config = [[require('config.nvim-tree')]],
   }
   use { "dstein64/vim-startuptime" }
+  use {
+    'nvim-lualine/lualine.nvim',
+    requires = { 'kyazdani42/nvim-web-devicons', opt = true },
+    config = [[require('config.nvim-lualine')]],
+  }
   end
 )
