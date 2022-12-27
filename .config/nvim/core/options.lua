@@ -111,6 +111,8 @@ map('n', '<S-Down>', 'yyddp', defaults)
 
 -- Keymaps for Nvim tree
 map('n', '<leader>e', ':NvimTreeToggle<cr>', defaults)
+map('n', '<C-Left>', '<C-w><Left>', defaults)
+map('n', '<C-Right>', '<C-w><Right>', defaults)
 
 ---- Do some magic with autocmd
 -- Remove trailing space
