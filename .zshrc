@@ -35,7 +35,7 @@ bindkey "^[[B" down-line-or-beginning-search # Down
 [ -f /opt/miniconda3/etc/profile.d/conda.sh ] && source /opt/miniconda3/etc/profile.d/conda.sh
 
 source ~/.aliases
-[ -f ~/.privatealiases ] && source ~/.privatealiases 
+[ -f ~/.privatealiases ] && source ~/.privatealiases
 
 function pet-select() {
   BUFFER=$(pet search --query "$LBUFFER")
@@ -97,3 +97,5 @@ zinit light-mode for \
     zdharma-continuum/zinit-annex-rust
 
 ### End of Zinit's installer chunk
+
+[ -f ~/.aws-fzf ] && source ~/.aws-fzf
