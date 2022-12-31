@@ -19,6 +19,9 @@ set.shellcmdflag = '-ic'
 -- Disable highlights results from your previous search
 set.hlsearch = false
 
+-- Disable scroll to end of file
+set.scrolloff = 3
+
 -- Keymaps--
 
 -- Unmap Ctrl + q
@@ -96,8 +99,6 @@ map('n', '<leader>C', ':keepjumps normal! ggyG<cr>', defaults)
 -- Toggle see whitespace characters like: eol, space, ...
 set.lcs = 'tab:>-,eol:$,nbsp:X,trail:#'
 map('n', '<F6>', ':set list!<cr>')
--- Disable scroll to end of file
-set.scrolloff = 3
 
 -- Ctrl + l to remove highlights and redraw your screen
 map('n', '<C-l>', ':nohlsearch<cr>', defaults)
@@ -121,7 +122,8 @@ map('n', '<C-Left>', '<C-w><Left>', defaults)
 map('n', '<C-Right>', '<C-w><Right>', defaults)
 
 -- Using H/L to go to the begining and the end of line
-map('n', 'H', '0', defaults)
+-- Note: H will map to ^ (the first non-whitespace character of a line)
+map('n', '^', '0', defaults)
 map('n', 'L', '$', defaults)
 
 ---- Do some magic with autocmd
