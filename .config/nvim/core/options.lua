@@ -7,30 +7,10 @@ local defaults = { noremap = true, silent = true }
 -- Keys notation table:
 -- https://neovim.io/doc/user/intro.html#key-notation
 
+-- Disable Netrw
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 set.termguicolors = true
---unmap Ctrl + q
-map("n", "<C-q>", "", defaults)
-
--- map jj to esc
-nmap('i', 'jj', '<esc>l', defaults)
-
--- map leader to <Space>
-map("n", " ", "<Nop>", { silent = true, remap = false })
-vim.g.mapleader = " "
-
--- map for telescope
-map('n', '<leader>ff', builtin.find_files, {})
-map('n', '<leader>fg', builtin.live_grep, {})
-map('n', '<leader>fb', builtin.buffers, {})
-map('n', '<leader>fh', builtin.help_tags, {})
-
-for i=1,9,1
-do
-  map('n', '<leader>'..i, i.."gt", {})
-end
-map('n', '<leader>0', ":tablast<cr>", {})
 
 -- Discovered it when using vim-forgit
 -- https://github.com/ray-x/forgit.nvim/issues/1
@@ -38,6 +18,32 @@ set.shellcmdflag = '-ic'
 
 -- Disable highlights results from your previous search
 set.hlsearch = false
+
+-- Keymaps--
+
+-- Unmap Ctrl + q
+map("n", "<C-q>", "", defaults)
+
+-- Map jj to esc
+nmap('i', 'jj', '<esc>l', defaults)
+
+-- Map leader to <Space>
+map("n", " ", "<Nop>", { silent = true, remap = false })
+vim.g.mapleader = " "
+
+-- Telescope
+map('n', '<leader>ff', builtin.find_files, {})
+map('n', '<leader>fg', builtin.live_grep, {})
+map('n', '<leader>fb', builtin.buffers, {})
+map('n', '<leader>fh', builtin.help_tags, {})
+
+-- Using <leader> + number (1, 2, ... 9) to switch tab
+for i=1,9,1
+do
+  map('n', '<leader>'..i, i.."gt", {})
+end
+map('n', '<leader>0', ":tablast<cr>", {})
+
 
 -- map for quick quit, save files using leader key
 ---- Normal mode
@@ -113,6 +119,10 @@ map('n', '<S-Down>', 'yyddp', defaults)
 map('n', '<leader>e', ':NvimTreeToggle<cr>', defaults)
 map('n', '<C-Left>', '<C-w><Left>', defaults)
 map('n', '<C-Right>', '<C-w><Right>', defaults)
+
+-- Using H/L to go to the begining and the end of line
+map('n', 'H', '0', defaults)
+map('n', 'L', '$', defaults)
 
 ---- Do some magic with autocmd
 -- Remove trailing space
