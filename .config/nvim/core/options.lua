@@ -122,8 +122,9 @@ map('n', '<C-Left>', '<C-w><Left>', defaults)
 map('n', '<C-Right>', '<C-w><Right>', defaults)
 
 -- Using H/L to go to the begining and the end of line
--- Note: H will map to ^ (the first non-whitespace character of a line)
-map('n', '^', '0', defaults)
+-- Note: H will map to _ (the first non-whitespace character of a line)
+-- It would be helpful if it is a indent line in some languages like Python, Ruby, YAML, ...
+map('n', 'H', '_', defaults)
 map('n', 'L', '$', defaults)
 
 ---- Do some magic with autocmd
