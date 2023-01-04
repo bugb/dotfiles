@@ -1,5 +1,4 @@
 local builtin = require('telescope.builtin')
-local nmap = vim.api.nvim_set_keymap
 local map = vim.keymap.set
 local set = vim.opt
 local defaults = { noremap = true, silent = true }
@@ -28,7 +27,7 @@ set.scrolloff = 3
 map("n", "<C-q>", "", defaults)
 
 -- Map jj to esc
-nmap('i', 'jj', '<esc>l', defaults)
+map('i', 'jj', '<esc>l', defaults)
 
 -- Map leader to <Space>
 map("n", " ", "<Nop>", { silent = true, remap = false })
