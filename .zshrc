@@ -49,7 +49,7 @@ bindkey '^R' history-incremental-search-backward
 
 bindkey -e
 
-export PATH="$PATH:/home/$USER/.local/bin"
+export PATH="$PATH:/$HOME/.local/bin"
 export NPM_CONFIG_PREFIX=~/.npm-global
 export PATH=$PATH:~/.npm-global/bin
 
