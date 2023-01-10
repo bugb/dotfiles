@@ -87,5 +87,12 @@ packer.startup(function()
     requires = { 'kyazdani42/nvim-web-devicons', opt = true },
     config = [[require('config.nvim-lualine')]],
   }
+  use({
+    'rose-pine/neovim',
+    as = 'rose-pine',
+    config = function()
+        vim.cmd('colorscheme rose-pine')
+    end
+  })
   end
 )
