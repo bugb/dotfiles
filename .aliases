@@ -14,3 +14,7 @@ randpwnormal(){ < /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-16};echo;}
 
 # Format python code
 alias fopy="autopep8 --in-place --recursive --recursive ."
+
+
+### Git ###
+alias fpush="git add . && git commit --amend --no-edit && git push origin HEAD -f"
