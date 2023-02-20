@@ -71,9 +71,9 @@ packer.startup(function()
     'nvim-telescope/telescope.nvim', tag = '0.1.0',
     requires = { {'nvim-lua/plenary.nvim'} }
   }
-  use { "tpope/vim-fugitive" }
-  use { "ray-x/guihua.lua", after = "vim-fugitive" }
-  use { "ray-x/forgit.nvim", after = "vim-fugitive", config = [[require('config.nvim-forgit')]] }
+  --use { "tpope/vim-fugitive" }
+  --use { "ray-x/guihua.lua", after = "vim-fugitive" }
+  --use { "ray-x/forgit.nvim", after = "vim-fugitive", config = [[require('config.nvim-forgit')]] }
   use {
     'nvim-tree/nvim-tree.lua',
     requires = {
