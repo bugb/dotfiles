@@ -112,4 +112,7 @@ zle -N zle-keymap-select
 
 # User Space + Tab to select your folder
 eval "$(zoxide init zsh)"
+autoload -U compinit
+compinit
+fpath=($fpath ~/.zsh/completion)
 
