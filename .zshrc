@@ -49,14 +49,12 @@ bindkey '^R' history-incremental-search-backward
 
 bindkey -e
 
-export PATH="$PATH:/$HOME/.local/bin"
 export NPM_CONFIG_PREFIX=~/.npm-global
-export PATH=$PATH:~/.npm-global/bin
-
+export LOCALBIN="$HOME/.local/bin"
 export GOPATH="$HOME/go"
 export GOBIN="$HOME/go/bin"
 export GOROOT="/usr/lib/go"
-export PATH="$PATH:$GOBIN:$GOROOT/bin"
+export PATH="$PATH:$LOCALBIN:$GOBIN:$GOROOT/bin:$NPM_CONFIG_PREFIX/bin"
 
 autoload -U up-line-or-beginning-search
 autoload -U down-line-or-beginning-search
