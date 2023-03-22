@@ -94,5 +94,6 @@ packer.startup(function()
         vim.cmd('colorscheme rose-pine')
     end
   })
+  use { "catppuccin/nvim", as = "catppuccin" }
   end
 )
