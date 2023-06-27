@@ -106,11 +106,6 @@ color=#A4C2F4
 label=🤯
 interval=10
 
-[pacman]
-full_text=c ·
-command=echo "· ${full_text~~}"
-color=#FFFF00
-
 # Battery indicator
 #
 # The battery instance defaults to 0.
