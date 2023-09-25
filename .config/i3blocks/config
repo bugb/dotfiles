@@ -36,6 +36,13 @@ markup=none
 # The second parameter overrides the mixer selection
 # See the script for details.
 
+
+[warp]
+command=warp-cli status | grep Status | sed 's/Status update/Warp status/'
+interval=3600
+color=#A4C2F4
+
+
 [volume]
 label=💿
 interval=once
