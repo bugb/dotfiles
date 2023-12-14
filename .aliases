@@ -23,3 +23,8 @@ alias gfp="git push origin HEAD -f"
 alias amen="git commit --amend --no-edit"
 alias fpush="git add . && amen && gfp"
 alias gpp="git push origin HEAD"
+
+rok() {
+  echo "Running Ngrok at port ${1:-3000}"
+  # Your Ngrok stuff
+}
