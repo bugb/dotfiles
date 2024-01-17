@@ -15,6 +15,9 @@ randpwnormal(){ < /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-16};echo;}
 # Format python code
 alias fopy="autopep8 --in-place --recursive --recursive ."
 
+# Get date for specific timezone
+alias ntime="TZ=America/New_York date"
+
 
 ### Git ###
 alias gdnew="for next in \$( git ls-files --others --exclude-standard ) ; do git --no-pager diff --no-index /dev/null \$next; done;"
