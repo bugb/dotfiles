@@ -95,5 +95,6 @@ packer.startup(function()
     end
   })
   use { "catppuccin/nvim", as = "catppuccin" }
+  use { "mrcjkb/rustaceanvim" }
   end
 )
