@@ -15,4 +15,11 @@
     "terminal.foreground": "#00FD61",
     "terminal.background": "#383737"
   }
+  // For Windows
+  //"terminal.integrated.profiles.windows": {
+  //  "Git Bash": {
+  //    "path": "C:\\Program Files\\Git\\bin\\bash.exe"
+  //  }
+  //},
+  //"terminal.integrated.defaultProfile.windows": "Git Bash"
 }
