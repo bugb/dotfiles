@@ -18,6 +18,13 @@ alias fopy="autopep8 --in-place --recursive --recursive ."
 # Get date for specific timezone
 alias ntime="TZ=America/New_York date"
 
+# Docker
+alias up="docker compose up -d"
+alias upb="docker compose up -d --build"
+alias down="docker compose down"
+
+# CDK
+alias cdkn="cdk --require-approval never"
 
 ### Git ###
 alias gdnew="for next in \$( git ls-files --others --exclude-standard ) ; do git --no-pager diff --no-index /dev/null \$next; done;"
@@ -27,7 +34,38 @@ alias amen="git commit --amend --no-edit"
 alias fpush="git add . && amen && gfp"
 alias gpp="git push origin HEAD"
 
+alias pbcopy='xsel --clipboard --input'
+alias pbpaste='xsel --clipboard --output'
+
 rok() {
   echo "Running Ngrok at port ${1:-3000}"
   # Your Ngrok stuff
 }
+
+noawsclipager() {
+  export AWS_PAGER=""
+}
+
+# Define the function
+update_branch() {
+    if [ -z "$1" ]; then
+        echo "Usage: update_branch <branch_name>"
+        return 1
+    fi
+
+    local branch_name="$1"
+
+    echo "Fetching ..."
+    git fetch
+    echo "Switching to branch '$branch_name'..."
+
+    if git checkout "$branch_name"; then
+        echo "Resetting branch '$branch_name' to match origin/$branch_name..."
+        git reset --hard "origin/$branch_name"
+        echo "Branch '$branch_name' is now up-to-date."
+    else
+        echo "Failed to switch to branch '$branch_name'. Make sure it exists."
+        return 1
+    fi
+}
+
