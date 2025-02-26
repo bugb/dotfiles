@@ -132,3 +132,5 @@ fi
 unset __conda_setup
 # <<< conda initialize <<<
 
+export TERM=rxvt
+
