@@ -96,5 +96,7 @@ packer.startup(function()
   })
   use { "catppuccin/nvim", as = "catppuccin" }
   use { "mrcjkb/rustaceanvim" }
+  use { "lukas-reineke/indent-blankline.nvim" }
+  use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
   end
 )
