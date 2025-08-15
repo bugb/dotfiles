@@ -1,25 +1,37 @@
-{ 
+{
+  // === Shared (all OS) ===
   "editor.fontSize": 17,
   "editor.fontWeight": "bold",
   "editor.minimap.enabled": false,
   "workbench.colorTheme": "Visual Studio Light",
   "workbench.colorCustomizations": {
-    // "editor.background": "#b3cde0"
-    // "editor.background": "#f0e4e4"
-    // "editor.background": "#e7eff6"
     "editor.background": "#fdf5e6",
-    // "editor.background": "#fff4e6"
-    // "editor.background": "#eedbdb",
     "sideBar.background": "#f0e4e4",
     "tab.activeBackground": "#beef00",
     "terminal.foreground": "#00FD61",
     "terminal.background": "#383737"
-  }
-  // For Windows
-  //,"terminal.integrated.profiles.windows": {
-  //  "Git Bash": {
-  //    "path": "C:\\Program Files\\Git\\bin\\bash.exe"
-  //  }
-  //},
-  //"terminal.integrated.defaultProfile.windows": "Git Bash"
+  },
+
+  // === Terminals per-OS (no commenting needed) ===
+  "terminal.integrated.profiles.windows": {
+    // Prefer auto-detect via "source" to avoid hardcoding a path
+    "Git Bash": { "source": "Git Bash" },
+    "PowerShell": { "source": "PowerShell" },
+    "Command Prompt": { "source": "Command Prompt" }
+  },
+  "terminal.integrated.defaultProfile.windows": "Git Bash",
+
+  "terminal.integrated.profiles.osx": {
+    "zsh": { "path": "/bin/zsh" },
+    "bash": { "path": "/bin/bash" },
+    "fish": { "path": "/opt/homebrew/bin/fish", "icon": "fish" } // if installed
+  },
+  "terminal.integrated.defaultProfile.osx": "zsh",
+
+  "terminal.integrated.profiles.linux": {
+    "bash": { "path": "/bin/bash" },
+    "zsh":  { "path": "/usr/bin/zsh" },
+    "fish": { "path": "/usr/bin/fish", "icon": "fish" } // if installed
+  },
+  "terminal.integrated.defaultProfile.linux": "bash"
 }
