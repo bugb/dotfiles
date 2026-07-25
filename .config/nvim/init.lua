@@ -11,6 +11,8 @@ local nvim_ver = utils.get_nvim_version()
 --  return
 ---end
 
+-- Order matters: globals.lua and options.lua set mapleader, which lazy.nvim
+-- needs before it reads any plugin spec, and plugins.vim is what bootstraps it.
 local core_conf_files = {
     "globals.lua", -- some global settings
     "options.vim", -- setting options in nvim
@@ -26,9 +28,3 @@ for _, name in ipairs(core_conf_files) do
   local source_cmd = "source " .. path
   vim.cmd(source_cmd)
 end
-
--- On a fresh machine no plugin is on the runtimepath yet, and an uncaught error
--- here would abort init.lua before plugins.vim can bootstrap packer.
-pcall(function()
-  require("ibl").setup()
-end)
