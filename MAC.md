@@ -26,21 +26,55 @@ machine-specific or platform-specific.
 The parts that genuinely cannot be shared between machines have somewhere to
 live, which is what lets the shared files be symlinked at all:
 
-| File | Tracked | Holds |
+| Path | Tracked | Holds |
 | --- | --- | --- |
 | repo `.zshrc`, `.aliases` | yes | everything shared between machines |
-| `~/.zshrc.local` | **no** | per-machine PATH, tool setup, local aliases |
-| `~/.privatealiases` | **no** | tokens and secrets |
+| `~/.zshrc.d/*.zsh` | **no** | per-machine PATH, tool setup, local aliases |
+| `~/.privatealiases` | **no** | tokens and secrets, mode 600 |
 
-The tracked `.zshrc` sources both when they exist, `.zshrc.local` last so it can
-override anything. Nothing machine-specific or secret should ever be edited into
-the tracked files.
+`~/.zshrc.d` is the scalable half: the tracked `.zshrc` sources every
+`~/.zshrc.d/*.zsh` in name order, last, so machine-local config is a **new file**
+rather than an edit to a shared file. Nothing to merge, nothing to guard against
+committing by accident. Numeric prefixes order it:
 
-To move this Mac onto the shared `.zshrc`, split the current one first:
-everything Homebrew/nvm/conda/Webots/VS Code and the work aliases go to
-`~/.zshrc.local`, the tokens go to `~/.privatealiases`, then
-`./install.sh --link-shell`. It refuses to link while `~/.zshrc` still has
-anything token-shaped in it.
+```bash
+mkdir -m 700 -p ~/.zshrc.d
+cat > ~/.zshrc.d/00-path.zsh <<'EOF'
+export PATH="/opt/homebrew/bin:$PATH"
+EOF
+```
+
+Secrets deliberately do **not** go in `~/.zshrc.d`. They stay in the single
+`~/.privatealiases`, because one well-known path is easier to keep at mode 600,
+easier to exclude from backups and sync, and easier to audit than one file among
+many in a directory you add to routinely. `./install.sh --status` reports the
+mode of both and warns if either is readable by other users.
+
+To move this Mac onto the shared `.zshrc`: the tokens are already split out, so
+what is left is moving Homebrew/nvm/conda/Webots/VS Code setup and the work
+aliases into `~/.zshrc.d/`, then `./install.sh --link-shell`. It refuses to link
+while `~/.zshrc` still contains anything token-shaped.
+
+### If you want stronger than a 0600 file
+
+A plaintext file readable only by you is a real improvement over an inline
+`export` in a world-readable rc, but the values are still on disk and still in
+the environment of every process the shell starts. Two upgrades, in order of
+effort:
+
+- **Scope them per project.** `NPM_TOKEN`, `DD_PAT` and `CF_API_TOKEN` are for
+  particular repos, not for every shell. `direnv` with a gitignored `.envrc`
+  keeps them out of unrelated processes entirely.
+- **Keep them in the OS keystore.** On macOS, `security add-generic-password -s
+  GH_TOKEN -a "$USER" -w`, then in `~/.privatealiases`:
+
+  ```bash
+  export GH_TOKEN="$(security find-generic-password -s GH_TOKEN -a "$USER" -w 2>/dev/null)"
+  ```
+
+  Nothing is plaintext at rest, at the cost of a keychain call per secret per
+  shell. The Linux equivalent is `secret-tool` or `pass`, so the same
+  `~/.privatealiases` can branch on `$OSTYPE` and stay one file.
 
 ## What is active on the Mac
 

@@ -381,6 +381,44 @@ EOF
 
   printf '\nlinked = that path is this repo. Edit either side, same file.\n'
   printf 'Apply a group with --link-shell / --link-git / --link-kitty / --link-i3, or --all.\n'
+
+  show_local_overrides
+}
+
+# The untracked half of the setup. These are what let the tracked .zshrc be
+# shared: anything machine-specific or secret lives here instead of in git.
+show_local_overrides() {
+  local mode count
+
+  printf '\n%suntracked local config%s\n' "$BOLD" "$RESET"
+
+  if [ -f "$HOME/.privatealiases" ]; then
+    mode="$(file_mode "$HOME/.privatealiases")"
+    if [ "$mode" = "600" ]; then
+      printf '  ~/.privatealiases   secrets, mode %s %sok%s\n' "$mode" "$GREEN" "$RESET"
+    else
+      printf '  ~/.privatealiases   secrets, mode %s %s<- should be 600, run: chmod 600 ~/.privatealiases%s\n' \
+        "$mode" "$YELLOW" "$RESET"
+    fi
+  else
+    printf '  ~/.privatealiases   absent (put tokens here, chmod 600)\n'
+  fi
+
+  if [ -d "$HOME/.zshrc.d" ]; then
+    count=$(find "$HOME/.zshrc.d" -maxdepth 1 -name '*.zsh' 2>/dev/null | wc -l | tr -d ' ')
+    printf '  ~/.zshrc.d/         %s drop-in(s), sourced in name order\n' "$count"
+    # A world-readable secret drop-in is the easy mistake to make here.
+    find "$HOME/.zshrc.d" -maxdepth 1 -name '*.zsh' -perm +077 2>/dev/null | while read -r f; do
+      warn "$(basename "$f") is readable by other users: chmod 600 '$f'"
+    done
+  else
+    printf '  ~/.zshrc.d/         absent (mkdir -m 700 ~/.zshrc.d for machine-local config)\n'
+  fi
+}
+
+# Portable-ish octal mode: BSD stat and GNU stat disagree on flags.
+file_mode() {
+  stat -f '%Lp' "$1" 2>/dev/null || stat -c '%a' "$1" 2>/dev/null || echo "?"
 }
 
 # The repo is public and tracks .zshrc. Refuse to link a shell rc that has
@@ -420,6 +458,13 @@ EOF
   fi
 
   link_group shell
+
+  # The tracked .zshrc sources these; create the directory so there is an
+  # obvious place to put machine-local config instead of editing the repo file.
+  if [ ! -d "$HOME/.zshrc.d" ]; then
+    run mkdir -m 700 -p "$HOME/.zshrc.d"
+    ok "created ~/.zshrc.d for machine-local drop-ins"
+  fi
 
   command -v zsh >/dev/null 2>&1 || warn "zsh is not installed"
   for tool in starship zoxide pet; do

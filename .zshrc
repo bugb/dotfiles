@@ -166,14 +166,22 @@ if [[ -z "$TERM_PROGRAM" ]] && [[ "$TERM" == "xterm" ]] && infocmp rxvt >/dev/nu
   export TERM=rxvt
 fi
 
-# Machine-specific config goes here, not in this file. Sourced last so it can
-# override anything above. Neither of these is tracked, which is what makes this
-# file safe to symlink out of a public repo:
+# Machine-local config goes in drop-ins, not in this file. Everything matching
+# ~/.zshrc.d/*.zsh is sourced in name order, last, so it can override anything
+# above. Adding local config is then a new file rather than an edit to this
+# tracked one, which is what keeps this file mergeable across machines.
 #
-#   ~/.privatealiases  secrets and tokens (sourced earlier, next to .aliases)
-#   ~/.zshrc.local     per-machine PATH entries, tool setup, local aliases
+#   ~/.zshrc.d/00-path.zsh     PATH entries
+#   ~/.zshrc.d/50-work.zsh     work aliases, project helpers
+#   ~/.zshrc.d/90-secrets.zsh  tokens (chmod 600)
 #
-# Keeping them out means this .zshrc stays the single source of truth for
-# everything that is genuinely shared between machines.
-[ -f ~/.zshrc.local ] && source ~/.zshrc.local
+# Nothing under ~/.zshrc.d is tracked. That, plus ~/.privatealiases above, is
+# what makes this file safe to symlink out of a public repo.
+#
+# (N) is the null_glob qualifier: expand to nothing rather than erroring when
+# the directory is empty or absent.
+for _zshrc_d in ~/.zshrc.d/*.zsh(N); do
+  source "$_zshrc_d"
+done
+unset _zshrc_d
 
