@@ -5,7 +5,9 @@ local utils = require('utils')
 
 -- Inspect something
 function _G.inspect(item)
-  vim.pretty_print(item)
+  -- vim.pretty_print is gone as of nvim 0.12; vim.print replaced it in 0.9
+  local pp = vim.print or vim.pretty_print
+  pp(item)
 end
 
 ------------------------------------------------------------------------
@@ -25,7 +27,20 @@ vim.g.loaded_ruby_provider = 0  -- Disable ruby provider
 vim.g.loaded_node_provider = 0  -- Disable node provider
 vim.g.did_install_default_menus = 1  -- do not load menu
 
-if utils.executable('python3') then
+-- Pin the python3 provider to a dedicated venv when one exists. Otherwise the
+-- provider follows whichever python3 is first on $PATH, so activating a conda
+-- env or virtualenv without pynvim in it silently breaks python plugins such as
+-- UltiSnips. Create it with:
+--   python3 -m venv ~/.local/share/nvim/venv
+--   ~/.local/share/nvim/venv/bin/python3 -m pip install pynvim
+local venv_python = fn.stdpath("data") .. "/venv/bin/python3"
+if vim.g.is_win then
+  venv_python = fn.stdpath("data") .. "/venv/Scripts/python.exe"
+end
+
+if fn.executable(venv_python) == 1 then
+  vim.g.python3_host_prog = venv_python
+elseif utils.executable('python3') then
   if vim.g.is_win then
     vim.g.python3_host_prog = fn.substitute(fn.exepath("python3"), ".exe$", '', 'g')
   else

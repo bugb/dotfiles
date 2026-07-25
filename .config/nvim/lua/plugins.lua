@@ -44,6 +44,9 @@ packer.init({
 packer.startup(function()
 
   local use = use
+  -- packer manages itself: without this spec PackerClean/PackerSync deletes
+  -- packer.nvim, and every following startup re-clones it.
+  use { "wbthomason/packer.nvim", opt = true }
   use 'nvim-treesitter/nvim-treesitter'
   use {'andymass/vim-matchup', event = 'VimEnter'}
 

@@ -20,10 +20,15 @@ local core_conf_files = {
     "plugins.vim", -- all the plugins installed and their configurations
     "colorschemes.lua", -- colorscheme settings
 }
-require("ibl").setup()
 -- source all the core config files
 for _, name in ipairs(core_conf_files) do
   local path = string.format("%s/core/%s", vim.fn.stdpath("config"), name)
   local source_cmd = "source " .. path
   vim.cmd(source_cmd)
 end
+
+-- On a fresh machine no plugin is on the runtimepath yet, and an uncaught error
+-- here would abort init.lua before plugins.vim can bootstrap packer.
+pcall(function()
+  require("ibl").setup()
+end)
