@@ -1,10 +1,22 @@
 # Created by newuser for 5.9
-eval "$(starship init zsh)"
 
-export GTK_IM_MODULE=ibus
-export XMODIFIERS=@im=ibus
-export QT_IM_MODULE=ibus
-ibus-daemon -drx
+# Homebrew is not on the default PATH on macOS, and everything below (starship,
+# zoxide, nvim, ...) is installed through it.
+if [[ "$OSTYPE" == darwin* ]]; then
+  for brew_prefix in /opt/homebrew /usr/local; do
+    [ -x "$brew_prefix/bin/brew" ] && eval "$("$brew_prefix/bin/brew" shellenv)" && break
+  done
+fi
+
+command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
+
+# ibus is the Linux/X11 input method; macOS has its own and has no ibus-daemon.
+if [[ "$OSTYPE" == linux* ]]; then
+  export GTK_IM_MODULE=ibus
+  export XMODIFIERS=@im=ibus
+  export QT_IM_MODULE=ibus
+  command -v ibus-daemon >/dev/null 2>&1 && ibus-daemon -drx
+fi
 
 
 HISTFILE=~/.zsh_history
@@ -32,7 +44,15 @@ zle -N down-line-or-beginning-search
 bindkey "^[[A" up-line-or-beginning-search # Up
 bindkey "^[[B" down-line-or-beginning-search # Down
 
-[ -f /opt/miniconda3/etc/profile.d/conda.sh ] && source /opt/miniconda3/etc/profile.d/conda.sh
+# conda lives in a different prefix per machine (/opt on Arch, ~/miniconda3 on
+# this Mac), so probe instead of hardcoding one path.
+for conda_prefix in /opt/miniconda3 "$HOME/miniconda3" /opt/homebrew/Caskroom/miniconda/base; do
+  if [ -f "$conda_prefix/etc/profile.d/conda.sh" ]; then
+    source "$conda_prefix/etc/profile.d/conda.sh"
+    break
+  fi
+done
+unset conda_prefix
 
 source ~/.aliases
 [ -f ~/.privatealiases ] && source ~/.privatealiases
@@ -53,8 +73,13 @@ export NPM_CONFIG_PREFIX=~/.npm-global
 export LOCALBIN="$HOME/.local/bin"
 export GOPATH="$HOME/go"
 export GOBIN="$HOME/go/bin"
-export GOROOT="/usr/lib/go"
-export PATH="$PATH:$LOCALBIN:$GOBIN:$GOROOT/bin:$NPM_CONFIG_PREFIX/bin"
+# /usr/lib/go is the Arch layout; Homebrew keeps it under its own prefix.
+if command -v go >/dev/null 2>&1; then
+  export GOROOT="$(go env GOROOT)"
+elif [ -d /usr/lib/go ]; then
+  export GOROOT="/usr/lib/go"
+fi
+export PATH="$PATH:$LOCALBIN:$GOBIN:${GOROOT:+$GOROOT/bin:}$NPM_CONFIG_PREFIX/bin"
 
 autoload -U up-line-or-beginning-search
 autoload -U down-line-or-beginning-search
@@ -111,7 +136,7 @@ zle -N zle-line-finish
 zle -N zle-keymap-select
 
 # User Space + Tab to select your folder
-eval "$(zoxide init zsh)"
+command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
 autoload -U compinit
 compinit
 fpath=($fpath ~/.zsh/completion)
@@ -119,18 +144,44 @@ fpath=($fpath ~/.zsh/completion)
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/home/kai/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+# $HOME instead of the hardcoded /home/kai this was generated with, so it also
+# resolves on macOS (/Users/kai).
+__conda_setup="$("$HOME/miniconda3/bin/conda" 'shell.zsh' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then
     eval "$__conda_setup"
 else
-    if [ -f "/home/kai/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "/home/kai/miniconda3/etc/profile.d/conda.sh"
+    if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+        . "$HOME/miniconda3/etc/profile.d/conda.sh"
     else
-        export PATH="/home/kai/miniconda3/bin:$PATH"
+        [ -d "$HOME/miniconda3/bin" ] && export PATH="$HOME/miniconda3/bin:$PATH"
     fi
 fi
 unset __conda_setup
 # <<< conda initialize <<<
 
-export TERM=rxvt
+# Overriding TERM breaks colours, keys and clear in terminals that are not
+# actually rxvt (Terminal.app, iTerm2, kitty), and follows you over ssh/tmux.
+# Only set it if the terminfo entry exists and the terminal did not say better.
+if [[ -z "$TERM_PROGRAM" ]] && [[ "$TERM" == "xterm" ]] && infocmp rxvt >/dev/null 2>&1; then
+  export TERM=rxvt
+fi
+
+# Machine-local config goes in drop-ins, not in this file. Everything matching
+# ~/.zshrc.d/*.zsh is sourced in name order, last, so it can override anything
+# above. Adding local config is then a new file rather than an edit to this
+# tracked one, which is what keeps this file mergeable across machines.
+#
+#   ~/.zshrc.d/00-path.zsh     PATH entries
+#   ~/.zshrc.d/50-work.zsh     work aliases, project helpers
+#   ~/.zshrc.d/90-secrets.zsh  tokens (chmod 600)
+#
+# Nothing under ~/.zshrc.d is tracked. That, plus ~/.privatealiases above, is
+# what makes this file safe to symlink out of a public repo.
+#
+# (N) is the null_glob qualifier: expand to nothing rather than erroring when
+# the directory is empty or absent.
+for _zshrc_d in ~/.zshrc.d/*.zsh(N); do
+  source "$_zshrc_d"
+done
+unset _zshrc_d
 

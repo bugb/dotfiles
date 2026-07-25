@@ -11,6 +11,8 @@ local nvim_ver = utils.get_nvim_version()
 --  return
 ---end
 
+-- Order matters: globals.lua and options.lua set mapleader, which lazy.nvim
+-- needs before it reads any plugin spec, and plugins.vim is what bootstraps it.
 local core_conf_files = {
     "globals.lua", -- some global settings
     "options.vim", -- setting options in nvim
@@ -20,7 +22,6 @@ local core_conf_files = {
     "plugins.vim", -- all the plugins installed and their configurations
     "colorschemes.lua", -- colorscheme settings
 }
-require("ibl").setup()
 -- source all the core config files
 for _, name in ipairs(core_conf_files) do
   local path = string.format("%s/core/%s", vim.fn.stdpath("config"), name)
