@@ -20,6 +20,9 @@ SKIP_DEPS=0
 WITH_LSP=0
 LINK_SHELL=0
 LINK_GIT=0
+LINK_KITTY=0
+LINK_I3=0
+STATUS_ONLY=0
 ASSUME_YES=0
 
 # OS_NAME/PKG_MGR are normally detected. DOTFILES_FORCE_OS and
@@ -57,6 +60,7 @@ Installs the Neovim setup from this repo. Re-runnable; replaced files are
 backed up rather than deleted.
 
 Options:
+  -s, --status       Show which managed paths are linked to this repo, then exit.
   -n, --dry-run      Print what would happen, change nothing.
       --no-deps      Skip package installation, only link and bootstrap.
       --with-lsp     Also install the language servers the config looks for
@@ -66,10 +70,17 @@ Options:
                      tracks .zshrc.
       --link-git     Also link .gitconfig into $HOME. Needs git-lfs, which is
                      added to the dependency list when this is passed.
-      --all          --with-lsp --link-shell --link-git
+      --link-kitty   Also link .config/kitty/kitty.conf into $HOME.
+      --link-i3      Also link .config/i3 and .config/i3blocks (Linux only).
+      --all          Every group above, plus --with-lsp.
   -y, --yes          Do not prompt; assume yes. Prompts are skipped anyway when
                      stdin is not a terminal.
   -h, --help         This text.
+
+Everything is applied as a symlink, so a linked path *is* the file in this repo:
+edit either side and there is no copy to keep in sync. Machine-specific shell
+config belongs in ~/.zshrc.local and secrets in ~/.privatealiases; both are
+sourced by the tracked .zshrc and neither is in git.
 
 Supported: macOS (Homebrew), Arch (pacman), Debian/Ubuntu (apt), Fedora (dnf).
 EOF
@@ -82,7 +93,10 @@ while [ $# -gt 0 ]; do
     --with-lsp)    WITH_LSP=1 ;;
     --link-shell)  LINK_SHELL=1 ;;
     --link-git)    LINK_GIT=1 ;;
-    --all)         WITH_LSP=1; LINK_SHELL=1; LINK_GIT=1 ;;
+    --link-kitty)  LINK_KITTY=1 ;;
+    --link-i3)     LINK_I3=1 ;;
+    -s|--status)   STATUS_ONLY=1 ;;
+    --all)         WITH_LSP=1; LINK_SHELL=1; LINK_GIT=1; LINK_KITTY=1; LINK_I3=1 ;;
     -y|--yes)      ASSUME_YES=1 ;;
     -h|--help)     usage; exit 0 ;;
     *)             err "unknown option: $1"; echo; usage; exit 2 ;;
@@ -301,9 +315,72 @@ link_path() {
   ok "$dest -> $src"
 }
 
-link_nvim() {
-  info "linking the Neovim config"
-  link_path "$REPO_DIR/.config/nvim" "$HOME/.config/nvim"
+# Everything this repo can own, as "group|path-in-repo|path-in-HOME". This is the
+# list that makes the repo the single source of truth: adding a dotfile means
+# adding one line here, and --status reports against it.
+#
+# Only the nvim group is applied by default. The rest is opt-in because it either
+# replaces machine-specific files or is platform-specific.
+manifest() {
+  cat <<EOF
+nvim|.config/nvim|$HOME/.config/nvim
+shell|.zshrc|$HOME/.zshrc
+shell|.aliases|$HOME/.aliases
+git|.gitconfig|$HOME/.gitconfig
+kitty|.config/kitty/kitty.conf|$HOME/.config/kitty/kitty.conf
+i3|.config/i3|$HOME/.config/i3
+i3|.config/i3blocks|$HOME/.config/i3blocks
+EOF
+}
+
+# Link every entry of one group. Returns 1 if the group has nothing in it.
+link_group() {
+  local want="$1" group src dest found=1
+  while IFS='|' read -r group src dest; do
+    [ "$group" = "$want" ] || continue
+    found=0
+    link_path "$REPO_DIR/$src" "$dest"
+  done <<EOF
+$(manifest)
+EOF
+  return $found
+}
+
+# What the repo owns versus what is actually on this machine.
+HOME_ABBREV='~'
+
+show_status() {
+  local group src dest state link_target shown
+  printf '\n%s%-7s %-28s %s%s\n' "$BOLD" "GROUP" "PATH IN HOME" "STATE" "$RESET"
+
+  while IFS='|' read -r group src dest; do
+    if [ ! -e "$REPO_DIR/$src" ]; then
+      state="${YELLOW}not in repo${RESET}"
+    elif [ -L "$dest" ]; then
+      link_target="$(readlink "$dest")"
+      if [ "$link_target" = "$REPO_DIR/$src" ]; then
+        state="${GREEN}linked${RESET}"
+      else
+        state="${YELLOW}linked elsewhere -> $link_target${RESET}"
+      fi
+    elif [ -e "$dest" ]; then
+      state="${YELLOW}own copy, not linked${RESET}"
+    else
+      state="absent"
+    fi
+    # Show ~/… rather than the absolute path, so the column stays narrow. The
+    # tilde comes from a variable so it is never a quoted literal to expand.
+    case "$dest" in
+      "$HOME"/*) shown="$HOME_ABBREV/${dest#"$HOME"/}" ;;
+      *)         shown="$dest" ;;
+    esac
+    printf '%-7s %-28s %s\n' "$group" "$shown" "$state"
+  done <<EOF
+$(manifest)
+EOF
+
+  printf '\nlinked = that path is this repo. Edit either side, same file.\n'
+  printf 'Apply a group with --link-shell / --link-git / --link-kitty / --link-i3, or --all.\n'
 }
 
 # The repo is public and tracks .zshrc. Refuse to link a shell rc that has
@@ -342,8 +419,7 @@ EOF
     return 0
   fi
 
-  link_path "$REPO_DIR/.zshrc"   "$HOME/.zshrc"
-  link_path "$REPO_DIR/.aliases" "$HOME/.aliases"
+  link_group shell
 
   command -v zsh >/dev/null 2>&1 || warn "zsh is not installed"
   for tool in starship zoxide pet; do
@@ -360,10 +436,36 @@ link_git() {
     warn "delta is missing and .gitconfig sets it as the pager, so git diff would fail"
   fi
   if confirm "Replace ~/.gitconfig (user.name becomes 'Chau Giang') with a link into this repo?"; then
-    link_path "$REPO_DIR/.gitconfig" "$HOME/.gitconfig"
+    link_group git
   else
     warn "skipping the git config"
   fi
+}
+
+link_kitty() {
+  info "linking the kitty config"
+  # The repo's kitty.conf includes a theme.conf that is not tracked, and binds
+  # alt+N for tabs, which is a poor fit on macOS where alt is a compose key.
+  if [ "$OS_NAME" = "macos" ]; then
+    warn "this replaces macOS-friendly bindings (cmd+N tabs) with alt+N ones"
+  fi
+  if [ ! -f "$REPO_DIR/.config/kitty/theme.conf" ]; then
+    warn "kitty.conf includes ./theme.conf, which is not in the repo; kitty will warn at startup"
+  fi
+  if confirm "Replace ~/.config/kitty/kitty.conf with a link into this repo?"; then
+    link_group kitty
+  else
+    warn "skipping the kitty config"
+  fi
+}
+
+link_i3() {
+  if [ "$OS_NAME" = "macos" ]; then
+    warn "i3 is an X11 window manager; skipping on macOS"
+    return 0
+  fi
+  info "linking the i3 config"
+  link_group i3
 }
 
 # --------------------------------------------------------------- neovim ----
@@ -548,7 +650,15 @@ verify() {
 # ------------------------------------------------------------------ main ----
 
 main() {
-  printf '%sdotfiles installer%s  (%s)\n\n' "$BOLD" "$RESET" "$REPO_DIR"
+  printf '%sdotfiles installer%s  (%s)\n' "$BOLD" "$RESET" "$REPO_DIR"
+
+  if [ "$STATUS_ONLY" -eq 1 ]; then
+    detect_platform
+    show_status
+    exit 0
+  fi
+
+  printf '\n'
   [ "$DRY_RUN" -eq 0 ] || warn "dry run, nothing will be changed"
 
   detect_platform
@@ -564,7 +674,8 @@ main() {
     warn "skipping dependency installation"
   fi
 
-  link_nvim
+  info "linking the Neovim config"
+  link_group nvim
   cleanup_packer
   setup_python_provider
   install_plugins
@@ -572,8 +683,11 @@ main() {
   [ "$WITH_LSP" -eq 0 ]   || install_lsp_servers
   [ "$LINK_SHELL" -eq 0 ] || link_shell
   [ "$LINK_GIT" -eq 0 ]   || link_git
+  [ "$LINK_KITTY" -eq 0 ] || link_kitty
+  [ "$LINK_I3" -eq 0 ]    || link_i3
 
   verify
+  show_status
 
   printf '\n%sdone%s\n' "$GREEN$BOLD" "$RESET"
   if [ "$WITH_LSP" -eq 0 ]; then
