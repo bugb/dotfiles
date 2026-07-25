@@ -1,7 +1,11 @@
 # Using these dotfiles on macOS
 
-These dotfiles were written for Arch Linux. This file records what is safe to
-use on a Mac, what is deliberately *not* symlinked, and why.
+These dotfiles were originally written for Arch Linux, then made to work on macOS
+as well. This file covers what applies cleanly on a Mac, what is worth leaving
+alone, and why.
+
+For the general design — the symlink model, the manifest, how one repo serves two
+operating systems — see [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 Verified on macOS 26.1 (Apple Silicon), Neovim 0.12.4, zsh 5.9.
 
@@ -50,10 +54,17 @@ easier to exclude from backups and sync, and easier to audit than one file among
 many in a directory you add to routinely. `./install.sh --status` reports the
 mode of both and warns if either is readable by other users.
 
-To move this Mac onto the shared `.zshrc`: the tokens are already split out, so
-what is left is moving Homebrew/nvm/conda/Webots/VS Code setup and the work
-aliases into `~/.zshrc.d/`, then `./install.sh --link-shell`. It refuses to link
-while `~/.zshrc` still contains anything token-shaped.
+### Adopting the shared `.zshrc` on a machine that already has one
+
+Do this in two steps, or you will lose the setup that makes that machine work:
+
+1. Move anything machine-specific out of `~/.zshrc` into a drop-in — package
+   manager paths, version manager setup, tool-specific environment, local
+   aliases. Move any `export` of an API token into `~/.privatealiases`.
+2. `./install.sh --link-shell`.
+
+Step 2 refuses to run while `~/.zshrc` still contains anything token-shaped, so
+you cannot skip step 1 by accident.
 
 ### If you want stronger than a 0600 file
 
@@ -62,23 +73,29 @@ A plaintext file readable only by you is a real improvement over an inline
 the environment of every process the shell starts. Two upgrades, in order of
 effort:
 
-- **Scope them per project.** `NPM_TOKEN`, `DD_PAT` and `CF_API_TOKEN` are for
-  particular repos, not for every shell. `direnv` with a gitignored `.envrc`
-  keeps them out of unrelated processes entirely.
-- **Keep them in the OS keystore.** On macOS, `security add-generic-password -s
-  GH_TOKEN -a "$USER" -w`, then in `~/.privatealiases`:
+- **Scope tokens per project.** A token used by one repository does not need to be
+  in every shell. `direnv` with a gitignored `.envrc` keeps it out of unrelated
+  processes entirely.
+- **Keep them in the OS keystore.** On macOS, store the value once:
 
   ```bash
-  export GH_TOKEN="$(security find-generic-password -s GH_TOKEN -a "$USER" -w 2>/dev/null)"
+  security add-generic-password -s MY_TOKEN -a "$USER" -w
   ```
 
-  Nothing is plaintext at rest, at the cost of a keychain call per secret per
+  then read it back in `~/.privatealiases`:
+
+  ```bash
+  export MY_TOKEN="$(security find-generic-password -s MY_TOKEN -a "$USER" -w 2>/dev/null)"
+  ```
+
+  Nothing is plaintext at rest, at the cost of a keystore call per secret per
   shell. The Linux equivalent is `secret-tool` or `pass`, so the same
-  `~/.privatealiases` can branch on `$OSTYPE` and stay one file.
+  `~/.privatealiases` can branch on `$OSTYPE` and stay a single file.
 
-## What is active on the Mac
+## Setting it up
 
-Only Neovim. `~/.config/nvim` is a symlink into this repo. Run the installer:
+By default only Neovim is applied: `~/.config/nvim` becomes a symlink into this
+repo. Run the installer:
 
 ```bash
 ./install.sh              # deps + link + plugins
@@ -100,56 +117,82 @@ npm i -g typescript typescript-language-server
 ```
 
 Plugins are managed by lazy.nvim, which bootstraps itself: launching `nvim` once
-on a new machine installs everything. `lazy-lock.json` is committed, so a fresh
-machine gets the same plugin revisions this one runs. `:Lazy` for the UI, and
-the old packer abbreviations still work (`ps` -> `Lazy sync`, `pud` ->
-`Lazy update`, `pi`, `pc`).
+on a new machine installs everything. `lazy-lock.json` is tracked, so every
+machine gets the same plugin revisions. `:Lazy` opens the UI, and the old packer
+abbreviations still work (`ps` → `Lazy sync`, `pud` → `Lazy update`, `pi`, `pc`).
 
-The python3 provider (needed by UltiSnips) is pinned to a dedicated venv so that
-activating a conda env cannot break it — see `core/globals.lua`. `install.sh`
-creates it; by hand it is:
+The python3 provider, which UltiSnips needs, is pinned to a dedicated venv so
+that activating a conda env or virtualenv cannot break it — see
+`core/globals.lua`. `install.sh` creates it; by hand it is:
 
 ```bash
 python3 -m venv ~/.local/share/nvim/venv
 ~/.local/share/nvim/venv/bin/python3 -m pip install pynvim
 ```
 
-Homebrew's python3 could not build the venv (`ensurepip` fails on 3.14), so it
-was created with `~/miniconda3/bin/python3`; the installer tries several
-interpreters for this reason. If miniconda is ever removed, recreate the venv
-with any working python3. Without it, UltiSnips fails at startup with
-"Failed to load python3 host".
+Watch out for one thing here: Homebrew's python 3.14 fails to build a venv,
+because its `ensurepip` is broken. The installer tries several interpreters for
+this reason, so it usually finds a working one — but if you build the venv by
+hand and it fails, try a different python3. Without a working venv, UltiSnips
+fails at startup with "Failed to load python3 host".
 
-`gopls` is not installed, so Neovim prints one `gopls not found!` warning at
-startup. `brew install go && go install golang.org/x/tools/gopls@latest` clears it.
+If a language server the config looks for is missing, Neovim prints one warning
+per server at startup. `./install.sh --with-lsp` installs `pylsp` and
+`typescript-language-server`. `gopls` needs a Go toolchain:
+`brew install go && go install golang.org/x/tools/gopls@latest`.
 
-## What is NOT symlinked on macOS, and why
+## What is left opt-in on macOS, and why
 
-| File | Why not |
+| File | Consider before linking |
 | --- | --- |
-| `.zshrc` | Would replace the Mac's own `~/.zshrc`, which carries Homebrew's PATH, nvm, conda, the VS Code CLI, Webots, cargo and several private tokens. Adopt by merging, never by symlink — see below. |
-| `.aliases` | Only reachable via this repo's `.zshrc`. Safe to source on its own once that file is merged. |
-| `.gitconfig` | Sets `core.pager = delta` and `filter.lfs.required = true`. `delta` is now installed, but `git-lfs` is not — install it first (`brew install git-lfs && git lfs install`) or LFS repos will fail to check out. It also changes `user.name` from "Chau Giang Local" to "Chau Giang". |
-| `.config/i3`, `.config/i3blocks` | i3 is an X11 window manager. Inert on macOS. |
-| `.config/kitty/kitty.conf` | The Mac already has a different one: font size 18 vs 14, `cmd+N` tab switching (option is a compose key on macOS, so the repo's `alt+N` bindings are a poor fit) and `allow_remote_control`. The repo version also `include`s a `theme.conf` that is gitignored and absent, and hardcodes `/usr/bin/fzf` where Homebrew installs `/opt/homebrew/bin/fzf`. |
-| `.config/vscode/editor.json` | Not a path VS Code reads. Real location is `~/Library/Application Support/Code/User/settings.json`. Reference copy only. |
+| `.zshrc` | Replaces your own `~/.zshrc` wholesale. Anything machine-specific in it — package manager paths, version managers, tool environment, local aliases — is not in this repo and stops being loaded. Split those into `~/.zshrc.d/` first. |
+| `.aliases` | Only reachable via this repo's `.zshrc`, so link it together with that. |
+| `.gitconfig` | Sets `core.pager = delta` and `filter.lfs.required = true`, so it needs both installed (`brew install git-delta git-lfs && git lfs install`) or `git diff` and LFS checkouts will fail. It also sets a `user.name` and `user.email` that are almost certainly not yours. |
+| `.config/i3`, `.config/i3blocks` | i3 is an X11 window manager, so this is inert on macOS. |
+| `.config/kitty/kitty.conf` | Binds `alt+N` to switch tabs, which is awkward on macOS where alt is a compose key — `cmd+N` is the native idiom. It also `include`s a `theme.conf` that is gitignored and absent, so kitty warns at startup, and hardcodes `/usr/bin/fzf` where Homebrew installs `/opt/homebrew/bin/fzf`. |
+| `.config/vscode/editor.json` | Not a path VS Code reads. The real location is `~/Library/Application Support/Code/User/settings.json`, so this is a reference copy only. |
 
-## Before adopting `.zshrc`
+## Before linking `.zshrc`: secrets
 
-⚠️ **This repo is public and tracks `.zshrc`.** The Mac's current `~/.zshrc`
-contains live GitHub, Datadog and Cloudflare tokens in plaintext. If you symlink
-`~/.zshrc` into this repo, the next `git add .` publishes them.
+⚠️ **This repo tracks `.zshrc`.** If your fork is public and you symlink
+`~/.zshrc` into it, anything in that file is one `git add .` away from being
+published.
 
-This file already sources `~/.privatealiases` if it exists — put secrets there
-and keep it out of git. Rotate anything that has been sitting in a shell rc.
+Shell rc files are a common place for API tokens to accumulate as inline
+`export` lines. Before linking, move them to `~/.privatealiases`, which the
+tracked `.zshrc` sources and git never sees:
 
-The Arch-only lines have been made conditional rather than removed, so the file
-behaves identically on Arch and no longer breaks on macOS:
+```bash
+touch ~/.privatealiases && chmod 600 ~/.privatealiases
+# then move each `export SOME_TOKEN=…` line out of ~/.zshrc into it
+```
+
+`./install.sh --link-shell` refuses to run while `~/.zshrc` still contains
+anything token-shaped, and `--status` warns if `~/.privatealiases` is readable by
+other users. Also check the mode on `~/.zshrc` itself — a shell rc holding
+credentials at the default `0644` is readable by every account on the machine.
+
+If a token has been sitting in a world-readable file, in shell history, or in a
+backup, treat it as exposed and rotate it. Moving a credential does not un-expose
+it.
+
+## What was made portable
+
+The Linux-only lines are conditional rather than removed, so `.zshrc` behaves
+exactly as before on Linux and no longer breaks on macOS:
 
 - `ibus-daemon` and the `*_IM_MODULE` exports only run on Linux
-- `export TERM=rxvt` only applies when the terminfo entry exists and the
-  terminal has not identified itself
-- conda and `GOROOT` are probed instead of hardcoded to `/opt`, `/home/kai` and
-  `/usr/lib/go`
-- Homebrew's `shellenv` is evaluated first on macOS
-- `starship`, `zoxide` and `pet` are guarded by `command -v`
+- `export TERM=rxvt` applies only when the terminfo entry exists and the terminal
+  has not already identified itself, since overriding `TERM` breaks colours and
+  keys in Terminal.app, iTerm2 and kitty — and follows you over ssh and tmux
+- conda and `GOROOT` are probed rather than hardcoded to Linux paths
+- Homebrew's `shellenv` is evaluated first on macOS, or nothing installed through
+  it is on `PATH`
+- `starship`, `zoxide` and `pet` are guarded by `command -v`, so a machine
+  missing them still gets a working shell
+
+The clipboard aliases are the one to know about: `.aliases` only maps
+`pbcopy`/`pbpaste` to `xsel` when `xsel` actually exists. Unconditionally, those
+aliases shadow the real macOS commands and every clipboard pipe breaks silently.
+
+[`ISSUES.md`](ISSUES.md) has the full list, with what each symptom looked like.

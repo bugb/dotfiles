@@ -177,9 +177,9 @@ without `pynvim` in it silently breaks UltiSnips.
 
 ## 5. One repo, two operating systems
 
-The Arch machine and the Mac share every tracked file. Differences are handled
-with **conditionals, never forks** — there is no `mac` branch and no duplicated
-config, so a change made on either machine is a change for both.
+Every machine shares every tracked file. Differences between operating systems are
+handled with **conditionals, never forks** — there is no `macos` branch and no
+duplicated config, so a change made on any machine is a change for all of them.
 
 ```mermaid
 flowchart LR
@@ -199,15 +199,21 @@ The mechanisms:
   on apt and dnf, `delta` is `git-delta` everywhere, apt needs `python3-venv`
   separately.
 
-## 6. Deliberately not managed
+## 6. Leaving things unmanaged is a valid choice
 
-| Path | Why |
+Not every group is worth linking on every machine. `--status` calls an unlinked
+path "own copy", and that is a fine place to leave it. Common reasons:
+
+| Path | Reason to think twice |
 | --- | --- |
-| `~/.zshrc` on the Mac | still a local copy; it holds machine-specific setup that has not been split into `~/.zshrc.d` yet |
-| `~/.gitconfig` | the repo version needs `git-lfs` installed and changes `user.name` |
-| `~/.config/kitty/kitty.conf` | the Mac's own is better suited: `cmd+N` tabs rather than `alt+N`, since alt is a compose key on macOS |
-| `.config/vscode/editor.json` | not a path VS Code reads; reference copy only |
-| `.config/i3`, `i3blocks` | X11, inert on macOS |
+| `~/.zshrc` | if yours holds machine-specific setup, split that into `~/.zshrc.d/` first, or you will lose it |
+| `~/.gitconfig` | sets `delta` as the pager and `filter.lfs.required`, so it needs `delta` and `git-lfs` installed; it also sets a `user.name` that is probably not yours |
+| `~/.config/kitty/kitty.conf` | binds `alt+N` for tabs, which is a poor fit on macOS where alt is a compose key; it also includes a `theme.conf` that is not tracked |
+| `.config/vscode/editor.json` | not a path VS Code reads; a reference copy only |
+| `.config/i3`, `i3blocks` | X11, so inert on macOS |
+
+If you fork this repo, expect to change `.gitconfig` and the kitty bindings to
+your own preferences before linking them.
 
 ## 7. The trade-off
 
@@ -218,8 +224,8 @@ and the reason to keep the working tree on `main` rather than parked on a featur
 branch.
 
 One visible consequence: `lazy-lock.json` lives in the repo, so updating plugins
-with `:Lazy` leaves the repo dirty. That is intended — commit it, and the other
-machine gets the same revisions.
+with `:Lazy` leaves the repo dirty. That is intended — commit it, and your other
+machines get the same revisions.
 
 ## See also
 

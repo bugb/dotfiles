@@ -1,12 +1,18 @@
 # Issues found and fixed
 
-A record of concrete defects in this config, why each one happened, and how the
-fix was verified. Written while porting the config to macOS in July 2026, on
-Neovim 0.12.4 — but most of these were not macOS-specific at all.
+Concrete defects that were in this config, why each happened, and how the fix was
+verified. Found while porting it from Arch Linux to macOS in July 2026 on Neovim
+0.12.4 — though most were not macOS-specific at all.
 
-Kept because several fixes look arbitrary without the reason: it explains why
-`shellcmdflag` is conditional, why plugin modules are required inside callbacks,
-and why the python3 provider is pinned to a venv.
+Two reasons this is worth reading:
+
+- **If you are using this config**, it explains fixes that look arbitrary from the
+  diff alone: why `shellcmdflag` is conditional, why plugin modules are required
+  inside keymap callbacks, why the python3 provider is pinned to a venv.
+- **If you maintain your own Neovim config**, several of these are general traps
+  rather than anything specific to this repo — the bootstrap ordering problem in
+  section A and the Neovim 0.12 removals in section B will bite any config of a
+  similar vintage.
 
 ---
 
@@ -97,8 +103,8 @@ one was a hard error or a traceback on every startup.
 Confirmed empirically rather than from release notes:
 `vim.pretty_print ~= nil` is `false` on 0.12.4 while `vim.print` exists.
 
-All of it is **version-gated**, not replaced outright, so an older Neovim on the
-Arch box still takes the old path:
+All of it is **version-gated**, not replaced outright, so an older Neovim still
+takes the old path:
 
 ```lua
 local use_native_lsp = vim.lsp.config ~= nil and vim.lsp.enable ~= nil
@@ -117,7 +123,7 @@ has no `on_attach`, so it is now driven by an `LspAttach` autocmd.
 | `shellcmdflag = '-ic'` | every `:!` re-runs the whole zsh profile — brew, conda, nvm, starship, zinit | skipped on macOS; it exists for vim-forgit, which is commented out |
 | `ibus-daemon -drx` | errors on every shell start; ibus is X11 | Linux-only branch |
 | `export TERM=rxvt` | wrong terminfo in Terminal.app, iTerm2, kitty; follows you over ssh and tmux | only when the terminal did not identify itself *and* the terminfo entry exists |
-| conda at `/opt/miniconda3` and `/home/kai/miniconda3` | neither exists; macOS is `/Users/kai` | probe a list of prefixes |
+| conda hardcoded to Linux prefixes | neither path exists; macOS puts users under `/Users` | probe a list of candidate prefixes |
 | `GOROOT=/usr/lib/go` | Homebrew uses its own prefix | `go env GOROOT` when `go` is present |
 | no `/opt/homebrew/bin` on `PATH` | every brew-installed tool missing | `brew shellenv` first, on darwin |
 | `alias pbcopy='xsel …'` | **shadows the real `pbcopy`**, and `xsel` is X11-only, so every clipboard pipe breaks silently | only alias when `xsel` actually exists |
@@ -154,58 +160,70 @@ with trailing whitespace still shrinks 16 → 12 bytes on save.
 ### D2. UltiSnips broke depending on `$PATH`
 
 `vim.g.python3_host_prog = fn.exepath("python3")` resolves to whatever comes
-first on `$PATH`. On this Mac that is conda's python, which has no `pynvim`, so
-UltiSnips failed at startup with "Failed to load python3 host" — and it would
-break again on any conda env switch.
+first on `$PATH`. If that happens to be a conda base env or a virtualenv without
+`pynvim` installed, UltiSnips fails at startup with "Failed to load python3
+host" — and it breaks again every time you activate a different env.
 
 **Fixed** by pinning the provider to `stdpath("data")/venv`, falling back to the
-old behaviour when that venv is absent so the Arch box is unaffected.
+old behaviour when that venv is absent so nothing regresses on a machine that
+never created one.
 
 Homebrew's python 3.14 could not create the venv — `ensurepip` fails — so
 `install.sh` tries several interpreters rather than assuming `python3` works.
 
 ---
 
-## E. Secrets
+## E. Secrets in a tracked shell rc
 
-Six `export` lines in `~/.zshrc` held GitHub, Datadog and Cloudflare
-credentials. Findings, in order of how much they mattered:
+This repo tracks `.zshrc`, and shell rc files are where API tokens tend to
+accumulate as inline `export` lines. That combination is a problem worth
+designing against rather than remembering to avoid.
 
-1. **`~/.zshrc` was mode `0644`** — world readable. Every token in it was
-   readable by any local user or process. This was the real exposure, and it had
-   nothing to do with git.
-2. **The 6 exports were only 3 distinct secrets**, each duplicated under two
-   names: `GH_TOKEN`/`NPM_TOKEN`, `DD_TOKEN`/`DD_PAT`, `CF_TOKEN`/`CF_API_TOKEN`.
-3. **One token was also in `~/.zsh_history`**, from having been typed on a
-   command line.
-4. **Nothing ever reached GitHub.** All values were checked against every commit
-   on every ref — 1.86 MB of diffs across 15 refs including 8 remote branches
-   and a tag — and against all 381 tracked files. No match, and no token-shaped
-   string anywhere in history. The repo tracks its *own* `.zshrc`, which is a
-   different file from the live `~/.zshrc` and never held a credential.
+Two things are easy to get wrong, and the first is the one people miss:
 
-**Fixed** by moving the exports to `~/.privatealiases` at mode 0600, sourced by
-`.zshrc`; tightening `~/.zshrc` to 0600; and adding `~/.zshrc.d` so
-machine-local config has a home that is not the tracked file. `install.sh
---link-shell` now refuses to link while `~/.zshrc` contains anything
-token-shaped, and `--status` warns about loose permissions on either path.
+1. **File mode.** A shell rc is created `0644` by default — readable by every
+   account and every process on the machine. A credential in it is exposed
+   locally whether or not the repo is public, and that exposure has nothing to do
+   with git.
+2. **Reach.** A token typed on a command line also lands in `~/.zsh_history`, and
+   any backup of the rc file carries a copy too. Moving the original does not
+   retract those.
 
-A 0600 file is a floor, not a goal — the values are still plaintext at rest and
-still in the environment of every child process. Stronger options, in
-`ARCHITECTURE.md` terms: `direnv` for project-scoped tokens, or the OS keystore
+**How the repo handles it now:**
+
+- Secrets live in `~/.privatealiases` at mode 0600, which the tracked `.zshrc`
+  sources and git never sees.
+- Machine-local non-secret config lives in `~/.zshrc.d/*.zsh`, so there is no
+  reason to edit the tracked file at all.
+- `install.sh --link-shell` **refuses to link** while `~/.zshrc` still contains
+  anything token-shaped, so you cannot publish a credential by running the
+  installer.
+- `install.sh --status` reports the mode of `~/.privatealiases` and warns about
+  any drop-in readable by other users.
+
+A 0600 file is a floor, not a goal: the values are still plaintext at rest and
+still in the environment of every child process. Stronger options are in
+[`MAC.md`](MAC.md) — `direnv` for project-scoped tokens, or the OS keystore
 (`security` on macOS, `secret-tool`/`pass` on Linux).
+
+**If you inherit an rc with tokens in it,** grep the repo's full history before
+assuming they leaked — checking each value against every commit on every ref is
+quick and usually reassuring, since a tracked `.zshrc` in the repo is a different
+file from the `~/.zshrc` on the machine. Anything that *has* sat in a
+world-readable file, in shell history, or in a backup should be rotated. Moving a
+credential does not un-expose it.
 
 ---
 
-## F. Conflicts left unresolved on purpose
+## F. Known rough edges, left alone on purpose
 
-Not bugs — cases where the machine's own file was the better one. See
-[`MAC.md`](MAC.md).
+Not bugs — cases where a machine's existing file is often the better one, so these
+groups stay opt-in. See [`MAC.md`](MAC.md).
 
-- **`kitty.conf`**: the repo binds `alt+N` for tabs, but alt is a compose key on
-  macOS; the Mac's own config uses `cmd+N`. The repo version also `include`s a
-  `theme.conf` that is gitignored and absent, and hardcodes `/usr/bin/fzf` where
-  Homebrew installs to `/opt/homebrew/bin/fzf`.
+- **`kitty.conf`**: binds `alt+N` for tabs, but alt is a compose key on macOS,
+  where `cmd+N` is the native idiom. It also `include`s a `theme.conf` that is
+  gitignored and absent, so kitty warns at startup, and hardcodes `/usr/bin/fzf`
+  where Homebrew installs to `/opt/homebrew/bin/fzf`.
 - **`.gitconfig`**: sets `core.pager = delta` and `filter.lfs.required = true`.
   Without `git-lfs` installed, LFS repos fail to check out.
 - **`.config/vscode/editor.json`**: not a path VS Code reads. Real location is
