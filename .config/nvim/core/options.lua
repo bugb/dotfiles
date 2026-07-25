@@ -1,6 +1,3 @@
--- Guarded: on a fresh machine telescope is not installed yet, and a hard
--- require here would abort init.lua before packer can bootstrap itself.
-local has_telescope, builtin = pcall(require, 'telescope.builtin')
 local map = vim.keymap.set
 local set = vim.opt
 local defaults = { noremap = true, silent = true }
@@ -39,13 +36,13 @@ map('i', 'jj', '<esc>l', defaults)
 map("n", " ", "<Nop>", { silent = true, remap = false })
 vim.g.mapleader = " "
 
--- Telescope
-if has_telescope then
-  map('n', '<leader>ff', builtin.find_files, {})
-  map('n', '<leader>fg', builtin.live_grep, {})
-  map('n', '<leader>fb', builtin.buffers, {})
-  map('n', '<leader>fh', builtin.help_tags, {})
-end
+-- Telescope. Required inside the callbacks rather than at the top of this file:
+-- nothing is on the runtimepath until lazy.nvim has run, and deferring the
+-- require is what lets lazy load telescope on first use instead of at startup.
+map('n', '<leader>ff', function() require('telescope.builtin').find_files() end, {})
+map('n', '<leader>fg', function() require('telescope.builtin').live_grep() end, {})
+map('n', '<leader>fb', function() require('telescope.builtin').buffers() end, {})
+map('n', '<leader>fh', function() require('telescope.builtin').help_tags() end, {})
 
 -- Using <leader> + number (1, 2, ... 9) to switch tab
 for i=1,9,1

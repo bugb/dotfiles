@@ -7,24 +7,36 @@ Verified on macOS 26.1 (Apple Silicon), Neovim 0.12.4, zsh 5.9.
 
 ## What is active on the Mac
 
-Only Neovim. `~/.config/nvim` is a symlink into this repo:
+Only Neovim. `~/.config/nvim` is a symlink into this repo. Run the installer:
+
+```bash
+./install.sh              # deps + link + plugins
+./install.sh --with-lsp   # and the language servers
+./install.sh --dry-run    # show what it would do, change nothing
+```
+
+It is re-runnable and backs up anything it would replace. Everything else in
+this repo is left alone unless you pass `--link-shell` / `--link-git` — see the
+next section for why.
+
+Doing it by hand instead:
 
 ```bash
 ln -sfn "$PWD/.config/nvim" ~/.config/nvim
-```
-
-Everything else in this repo is left alone on macOS — see the next section.
-
-### Dependencies
-
-```bash
 brew install neovim fd fzf ripgrep bat git-delta
 brew install python-lsp-server            # pylsp
 npm i -g typescript typescript-language-server
 ```
 
+Plugins are managed by lazy.nvim, which bootstraps itself: launching `nvim` once
+on a new machine installs everything. `lazy-lock.json` is committed, so a fresh
+machine gets the same plugin revisions this one runs. `:Lazy` for the UI, and
+the old packer abbreviations still work (`ps` -> `Lazy sync`, `pud` ->
+`Lazy update`, `pi`, `pc`).
+
 The python3 provider (needed by UltiSnips) is pinned to a dedicated venv so that
-activating a conda env cannot break it — see `core/globals.lua`:
+activating a conda env cannot break it — see `core/globals.lua`. `install.sh`
+creates it; by hand it is:
 
 ```bash
 python3 -m venv ~/.local/share/nvim/venv
@@ -32,10 +44,11 @@ python3 -m venv ~/.local/share/nvim/venv
 ```
 
 Homebrew's python3 could not build the venv (`ensurepip` fails on 3.14), so it
-was created with `~/miniconda3/bin/python3`. If miniconda is ever removed,
-recreate the venv with any working python3.
+was created with `~/miniconda3/bin/python3`; the installer tries several
+interpreters for this reason. If miniconda is ever removed, recreate the venv
+with any working python3. Without it, UltiSnips fails at startup with
+"Failed to load python3 host".
 
-Plugins are managed by packer. First run bootstraps it; then `:PackerSync`.
 `gopls` is not installed, so Neovim prints one `gopls not found!` warning at
 startup. `brew install go && go install golang.org/x/tools/gopls@latest` clears it.
 

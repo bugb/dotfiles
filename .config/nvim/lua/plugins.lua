@@ -1,105 +1,130 @@
-local api = vim.api
 local fn = vim.fn
 
-local utils = require("utils")
+-- Bootstrap lazy.nvim. Replaces packer.nvim, which has been unmaintained since
+-- 2023. Unlike the old packer bootstrap this needs no separate sync step: lazy
+-- installs anything missing on the first startup, so a fresh machine ends up
+-- with a working setup by launching nvim once.
+local lazypath = fn.stdpath("data") .. "/lazy/lazy.nvim"
+local uv = vim.uv or vim.loop
 
--- The root dir to install all plugins. Plugins are under opt/ or start/ sub-directory.
-vim.g.plugin_home = fn.stdpath("data") .. "/site/pack/packer"
+if not uv.fs_stat(lazypath) then
+  vim.api.nvim_echo({ { "Installing lazy.nvim\n", "Type" } }, true, {})
 
---- Install packer if it has not been installed.
---- Return:
---- true: if this is a fresh install of packer
---- false: if packer has been installed
-local function packer_ensure_install()
-  -- Where to install packer.nvim -- the package manager (we make it opt)
-  local packer_dir = vim.g.plugin_home .. "/opt/packer.nvim"
+  local out = fn.system({
+    "git",
+    "clone",
+    "--filter=blob:none",
+    "--branch=stable",
+    "https://github.com/folke/lazy.nvim.git",
+    lazypath,
+  })
 
-  if fn.glob(packer_dir) ~= "" then
-    return false
+  -- Report and carry on rather than aborting: a config that still starts is
+  -- more useful than one that refuses to, and this must not block headless runs.
+  if vim.v.shell_error ~= 0 then
+    vim.api.nvim_echo({
+      { "Could not clone lazy.nvim, no plugin will be loaded:\n", "ErrorMsg" },
+      { out, "WarningMsg" },
+    }, true, {})
+    return
   end
-
-  -- Auto-install packer in case it hasn't been installed.
-  vim.api.nvim_echo({ { "Installing packer.nvim", "Type" } }, true, {})
-
-  local packer_repo = "https://github.com/wbthomason/packer.nvim"
-  local install_cmd = string.format("!git clone --depth=1 %s %s", packer_repo, packer_dir)
-  vim.cmd(install_cmd)
-
-  return true
 end
 
-local fresh_install = packer_ensure_install()
+vim.opt.rtp:prepend(lazypath)
 
--- Load packer.nvim
-vim.cmd("packadd packer.nvim")
+require("lazy").setup({
+  spec = {
+    ------------------------------------------------------------------ syntax --
+    { "nvim-treesitter/nvim-treesitter", build = ":TSUpdate" },
+    { "andymass/vim-matchup", event = "VimEnter" },
 
-local packer = require("packer")
-local packer_util = require("packer.util")
+    ---------------------------------------------------------------- snippets --
+    { "SirVer/ultisnips" },
 
-packer.init({
-  package_root = packer_util.join_paths(fn.stdpath('data'), 'site', 'pack')
-})
-
---- startup and add configure plugins
-packer.startup(function()
-
-  local use = use
-  -- packer manages itself: without this spec PackerClean/PackerSync deletes
-  -- packer.nvim, and every following startup re-clones it.
-  use { "wbthomason/packer.nvim", opt = true }
-  use 'nvim-treesitter/nvim-treesitter'
-  use {'andymass/vim-matchup', event = 'VimEnter'}
-
-  -- Snippet engine and snippet template
-  use {'SirVer/ultisnips'}
-
-  use { "onsails/lspkind-nvim", event = "VimEnter" }
-  -- auto-completion engine
-  use { "hrsh7th/nvim-cmp", after = "lspkind-nvim", config = [[require('config.nvim-cmp')]] }
-
-  -- nvim-cmp completion sources
-  use { "hrsh7th/cmp-nvim-lsp", after = "nvim-cmp" }
-  use { "hrsh7th/cmp-path", after = "nvim-cmp" }
-  use { "hrsh7th/cmp-buffer", after = "nvim-cmp" }
-  use { "hrsh7th/cmp-omni", after = "nvim-cmp" }
-  use { "quangnguyen30192/cmp-nvim-ultisnips", after = { "nvim-cmp", "ultisnips" } }
-  use { "neovim/nvim-lspconfig", after = "cmp-nvim-lsp", config = [[require('config.lsp')]] }
-  use({
-    "iamcco/markdown-preview.nvim",
-    run = function() vim.fn["mkdp#util#install"]() end,
-  })
-  --use { "vijaymarupudi/nvim-fzf" }
-  --use { "vijaymarupudi/nvim-fzf-commands" }
-  use {
-    'nvim-telescope/telescope.nvim', tag = '0.1.4',
-    requires = { {'nvim-lua/plenary.nvim'} }
-  }
-  --use { "tpope/vim-fugitive" }
-  --use { "ray-x/guihua.lua", after = "vim-fugitive" }
-  --use { "ray-x/forgit.nvim", after = "vim-fugitive", config = [[require('config.nvim-forgit')]] }
-  use {
-    'nvim-tree/nvim-tree.lua',
-    requires = {
-      'nvim-tree/nvim-web-devicons', -- optional, for file icons
+    -------------------------------------------------------------- completion --
+    {
+      "hrsh7th/nvim-cmp",
+      event = "InsertEnter",
+      dependencies = {
+        "onsails/lspkind-nvim",
+        "hrsh7th/cmp-nvim-lsp",
+        "hrsh7th/cmp-path",
+        "hrsh7th/cmp-buffer",
+        "hrsh7th/cmp-omni",
+        "SirVer/ultisnips",
+        "quangnguyen30192/cmp-nvim-ultisnips",
+      },
+      config = function()
+        require("config.nvim-cmp")
+      end,
     },
-    config = [[require('config.nvim-tree')]],
-  }
-  use { "dstein64/vim-startuptime" }
-  use {
-    'nvim-lualine/lualine.nvim',
-    requires = { 'kyazdani42/nvim-web-devicons', opt = true },
-    config = [[require('config.nvim-lualine')]],
-  }
-  use({
-    'rose-pine/neovim',
-    as = 'rose-pine',
-    config = function()
-        vim.cmd('colorscheme rose-pine')
-    end
-  })
-  use { "catppuccin/nvim", as = "catppuccin" }
-  use { "mrcjkb/rustaceanvim" }
-  use { "lukas-reineke/indent-blankline.nvim" }
-  use {'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'}
-  end
-)
+
+    --------------------------------------------------------------------- lsp --
+    {
+      "neovim/nvim-lspconfig",
+      event = { "BufReadPre", "BufNewFile" },
+      dependencies = { "hrsh7th/cmp-nvim-lsp" },
+      config = function()
+        require("config.lsp")
+      end,
+    },
+    { "mrcjkb/rustaceanvim", ft = "rust" },
+
+    ------------------------------------------------------------------ finder --
+    -- Pinned, as it was under packer. The keymaps in core/options.lua require
+    -- telescope.builtin lazily, and lazy.nvim loads the plugin on that require.
+    {
+      "nvim-telescope/telescope.nvim",
+      tag = "0.1.4",
+      cmd = "Telescope",
+      dependencies = { "nvim-lua/plenary.nvim" },
+    },
+
+    ----------------------------------------------------------------------- ui --
+    -- Eager: its config registers a VimEnter autocmd that opens the tree when
+    -- nvim is started on a directory, which has to be in place by then.
+    {
+      "nvim-tree/nvim-tree.lua",
+      lazy = false,
+      dependencies = { "nvim-tree/nvim-web-devicons" },
+      config = function()
+        require("config.nvim-tree")
+      end,
+    },
+    {
+      "nvim-lualine/lualine.nvim",
+      dependencies = { "nvim-tree/nvim-web-devicons" },
+      config = function()
+        require("config.nvim-lualine")
+      end,
+    },
+    { "lukas-reineke/indent-blankline.nvim", main = "ibl", opts = {} },
+    { "kevinhwang91/nvim-ufo", dependencies = "kevinhwang91/promise-async" },
+
+    ---------------------------------------------------------------- colours --
+    -- core/colorschemes.lua has the final say on which one is active.
+    {
+      "rose-pine/neovim",
+      name = "rose-pine",
+      config = function()
+        vim.cmd("colorscheme rose-pine")
+      end,
+    },
+    { "catppuccin/nvim", name = "catppuccin" },
+
+    -------------------------------------------------------------------- misc --
+    {
+      "iamcco/markdown-preview.nvim",
+      ft = "markdown",
+      build = function()
+        vim.fn["mkdp#util#install"]()
+      end,
+    },
+    { "dstein64/vim-startuptime", cmd = "StartupTime" },
+  },
+
+  -- The config directory is a symlink into a git repo, so the "config changed"
+  -- popups are constant noise. Updates stay manual, via :Lazy.
+  change_detection = { notify = false },
+  checker = { enabled = false },
+})

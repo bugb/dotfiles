@@ -3,7 +3,8 @@
 !/.config
 .config/*
 !.config/nvim/
-.config/nvim/plugin/packer_compiled.lua
+# lazy-lock.json is deliberately tracked: it pins plugin revisions so a fresh
+# machine installs the same versions this one is running.
 !.config/vscode
 !.config/i3/
 !/.config/kitty
@@ -13,5 +14,6 @@
 !.zshrc
 !README.md
 !MAC.md
+!install.sh
 !.gitconfig
 !.config/i3blocks/
