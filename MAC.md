@@ -5,6 +5,43 @@ use on a Mac, what is deliberately *not* symlinked, and why.
 
 Verified on macOS 26.1 (Apple Silicon), Neovim 0.12.4, zsh 5.9.
 
+## How this repo relates to the machine
+
+The repo is the source of truth and `install.sh` applies it. Everything is
+applied as a **symlink**, so a managed path *is* the file in the repo — there is
+no copy anywhere that can drift, and editing `~/.config/nvim/init.lua` and
+editing `.config/nvim/init.lua` in the repo are the same write.
+
+```bash
+./install.sh --status    # what is linked, what is a local copy, what is missing
+./install.sh             # apply: dependencies, the nvim symlink, plugins
+./install.sh --all       # every group, including shell, git, kitty and i3
+```
+
+`install.sh` reads one manifest (the `manifest()` function) listing
+`group|path-in-repo|path-in-HOME`. Managing a new dotfile is one line there.
+Groups other than `nvim` are opt-in, because they replace files that are
+machine-specific or platform-specific.
+
+The parts that genuinely cannot be shared between machines have somewhere to
+live, which is what lets the shared files be symlinked at all:
+
+| File | Tracked | Holds |
+| --- | --- | --- |
+| repo `.zshrc`, `.aliases` | yes | everything shared between machines |
+| `~/.zshrc.local` | **no** | per-machine PATH, tool setup, local aliases |
+| `~/.privatealiases` | **no** | tokens and secrets |
+
+The tracked `.zshrc` sources both when they exist, `.zshrc.local` last so it can
+override anything. Nothing machine-specific or secret should ever be edited into
+the tracked files.
+
+To move this Mac onto the shared `.zshrc`, split the current one first:
+everything Homebrew/nvm/conda/Webots/VS Code and the work aliases go to
+`~/.zshrc.local`, the tokens go to `~/.privatealiases`, then
+`./install.sh --link-shell`. It refuses to link while `~/.zshrc` still has
+anything token-shaped in it.
+
 ## What is active on the Mac
 
 Only Neovim. `~/.config/nvim` is a symlink into this repo. Run the installer:

@@ -166,3 +166,14 @@ if [[ -z "$TERM_PROGRAM" ]] && [[ "$TERM" == "xterm" ]] && infocmp rxvt >/dev/nu
   export TERM=rxvt
 fi
 
+# Machine-specific config goes here, not in this file. Sourced last so it can
+# override anything above. Neither of these is tracked, which is what makes this
+# file safe to symlink out of a public repo:
+#
+#   ~/.privatealiases  secrets and tokens (sourced earlier, next to .aliases)
+#   ~/.zshrc.local     per-machine PATH entries, tool setup, local aliases
+#
+# Keeping them out means this .zshrc stays the single source of truth for
+# everything that is genuinely shared between machines.
+[ -f ~/.zshrc.local ] && source ~/.zshrc.local
+
