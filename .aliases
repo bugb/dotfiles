@@ -1,4 +1,5 @@
-alias rls=". /home/$USER/.zshrc && tmux source-file /home/$USER/.tmux.conf || true"
+# $HOME rather than /home/$USER: macOS puts users under /Users
+alias rls=". $HOME/.zshrc && tmux source-file $HOME/.tmux.conf || true"
 
 # ASCII characters
 alias ascii="awk 'BEGIN{for(i=32;i<127;i++)printf \"%c\",i; print}'"
@@ -7,10 +8,11 @@ alias ascii="awk 'BEGIN{for(i=32;i<127;i++)printf \"%c\",i; print}'"
 alias asciiaws="awk 'BEGIN{for(i=32;i<127;i++)printf \"%c\",i; print}'|sed 's%[ @\"'\'']%%g'"
 
 # Generate random AWS usable password, default 16 characters
-randpwaws(){ < /dev/urandom tr -dc $(asciiaws) | head -c${1:-16};echo;}
+# LC_ALL=C: BSD tr (macOS) aborts with "Illegal byte sequence" on binary input
+randpwaws(){ < /dev/urandom LC_ALL=C tr -dc $(asciiaws) | head -c${1:-16};echo;}
 
 # Generate random password
-randpwnormal(){ < /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-16};echo;}
+randpwnormal(){ < /dev/urandom LC_ALL=C tr -dc _A-Z-a-z-0-9 | head -c${1:-16};echo;}
 
 # Format python code
 alias fopy="autopep8 --in-place --recursive --recursive ."
@@ -34,8 +36,12 @@ alias amen="git commit --amend --no-edit"
 alias fpush="git add . && amen && gfp"
 alias gpp="git push origin HEAD"
 
-alias pbcopy='xsel --clipboard --input'
-alias pbpaste='xsel --clipboard --output'
+# macOS ships pbcopy/pbpaste natively; aliasing them to xsel (X11-only) would
+# shadow the real thing and break every clipboard pipe on a Mac.
+if command -v xsel >/dev/null 2>&1; then
+  alias pbcopy='xsel --clipboard --input'
+  alias pbpaste='xsel --clipboard --output'
+fi
 
 rok() {
   echo "Running Ngrok at port ${1:-3000}"
