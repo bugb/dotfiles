@@ -29,6 +29,49 @@ WEATHER_LOCATION = os.environ.get("CLAUDE_STATUSLINE_WEATHER", "Hanoi")
 WEATHER_TTL = 30 * 60  # seconds
 DEFAULT_BRANCHES = {"master", "main"}
 
+# Bumped whenever the token accounting rules change, so stale caches computed
+# under the old rules are discarded rather than carried forward.
+TOKEN_CACHE_VERSION = 2
+
+def terminal_width():
+    """Columns available, or 0 when it cannot be determined.
+
+    An explicit setting always wins. Otherwise ask the controlling terminal
+    directly: stdout is a pipe here, so shutil.get_terminal_size only ever
+    reports its 80-column fallback, but /dev/tty still answers when the process
+    has inherited one. Returns 0 rather than guessing, so an undetectable width
+    means "print everything" instead of silently dropping segments.
+    """
+    explicit = os.environ.get("CLAUDE_STATUSLINE_WIDTH")
+    if explicit and explicit.strip().isdigit():
+        return int(explicit)
+
+    try:
+        import fcntl
+        import struct
+        import termios
+
+        with open("/dev/tty") as tty:
+            cols = struct.unpack("hh", fcntl.ioctl(tty, termios.TIOCGWINSZ, "1234"))[1]
+            if cols > 0:
+                return cols
+    except Exception:
+        pass
+
+    for var in ("COLUMNS", "TERM_WIDTH"):
+        value = os.environ.get(var)
+        if value and value.strip().isdigit():
+            return int(value)
+    return 0
+
+
+WIDTH_BUDGET = terminal_width()
+
+# Dropped in this order when the line will not fit. Machine metrics go first:
+# they are ambient and available from any other terminal, whereas the session
+# figures further down this list exist nowhere else.
+DROP_ORDER = ["cpu", "ram", "disk", "weather", "quota", "tokens", "model", "cost", "ctx", "dir"]
+
 R = "\033[0m"
 RED = "\033[31m"
 GREEN = "\033[32m"
@@ -41,12 +84,21 @@ BOLD = "\033[1m"
 
 
 def human(n):
-    """1234 -> 1.2k, 1234567 -> 1.2M."""
+    """1234 -> 1.2k, 107200000 -> 107M. Drops the decimal once it is noise."""
     n = float(n or 0)
     for limit, suffix in ((1e9, "G"), (1e6, "M"), (1e3, "k")):
         if abs(n) >= limit:
-            return f"{n / limit:.1f}{suffix}"
+            scaled = n / limit
+            return f"{scaled:.0f}{suffix}" if abs(scaled) >= 100 else f"{scaled:.1f}{suffix}"
     return str(int(n))
+
+
+def pair_h(free, total):
+    """'5.0/16G' — the unit is written once when both sides share it."""
+    f, t = bytes_h(free), bytes_h(total)
+    if f[-1] == t[-1]:
+        return f"{f[:-1]}/{t}"
+    return f"{f}/{t}"
 
 
 def bytes_h(n):
@@ -288,7 +340,9 @@ def seg_weather():
 
     if not text:
         return None
-    return f"{CYAN}{text}{R}"
+    # wttr pads between the icon and the temperature; collapse it, the emoji is
+    # already double-width and every column counts here.
+    return f"{CYAN}{' '.join(text.split())}{R}"
 
 
 def _refresh_weather(cache):
@@ -391,7 +445,7 @@ def seg_ram():
         return None
     used_pct = (total - avail) / total * 100
     colour = GREEN if used_pct < 75 else (YELLOW if used_pct < 90 else RED)
-    return f"{DIM}ram{R} {colour}{bytes_h(avail)}{R}{DIM}/{bytes_h(total)}{R}"
+    return f"{DIM}ram{R} {colour}{pair_h(avail, total)}{R}"
 
 
 def seg_cpu():
@@ -432,7 +486,7 @@ def seg_disk(cwd):
 
     used_pct = usage.used / usage.total * 100
     colour = GREEN if used_pct < 75 else (YELLOW if used_pct < 90 else RED)
-    return f"{DIM}disk{R} {colour}{bytes_h(usage.free)}{R}{DIM}/{bytes_h(usage.total)}{R}"
+    return f"{DIM}disk{R} {colour}{pair_h(usage.free, usage.total)}{R}"
 
 
 def seg_tokens(data):
@@ -448,10 +502,16 @@ def seg_tokens(data):
         return None
 
     state_file = CACHE / f"tokens-{session}.json"
-    fresh = {"offset": 0, "in": 0, "out": 0, "ids": []}
+    fresh = {"v": TOKEN_CACHE_VERSION, "offset": 0, "in": 0, "out": 0, "ids": []}
     state = dict(fresh)
     try:
-        state.update(json.loads(state_file.read_text()))
+        stored = json.loads(state_file.read_text())
+        # Only adopt a cache written by this version. An older one holds totals
+        # produced by different counting rules — the first release double
+        # counted, having no dedupe — and carrying those forward is silently
+        # wrong forever, since the offset is already at EOF.
+        if isinstance(stored, dict) and stored.get("v") == TOKEN_CACHE_VERSION:
+            state.update(stored)
     except Exception:
         pass
     seen = set(state.get("ids") or [])
@@ -571,29 +631,76 @@ def main():
 
     cwd = live_cwd(data) or os.getcwd()
 
+    builders = (
+        ("git", lambda: seg_git(cwd)),
+        ("dir", lambda: seg_dir(cwd)),
+        ("model", lambda: seg_model(data)),
+        ("weather", seg_weather),
+        ("cpu", seg_cpu),
+        ("ram", seg_ram),
+        ("disk", lambda: seg_disk(cwd)),
+        ("tokens", lambda: seg_tokens(data)),
+        ("ctx", lambda: seg_context(data)),
+        ("cost", lambda: seg_cost(data)),
+        ("quota", lambda: seg_quota(data)),
+    )
+
     sections = []
-    for fn in (
-        lambda: seg_git(cwd),
-        lambda: seg_dir(cwd),
-        lambda: seg_model(data),
-        seg_weather,
-        seg_cpu,
-        seg_ram,
-        lambda: seg_disk(cwd),
-        lambda: seg_tokens(data),
-        lambda: seg_context(data),
-        lambda: seg_cost(data),
-        lambda: seg_quota(data),
-    ):
+    for name, fn in builders:
         try:
             value = fn()
         except Exception:
             value = None
         if value:
-            sections.append(value)
+            sections.append((name, value))
 
-    sys.stdout.write(f" {DIM}│{R} ".join(sections))
+    sys.stdout.write(render(sections))
     return 0
+
+
+def visible_len(text):
+    """Rendered column count: ANSI escapes are free, emoji take two columns.
+
+    Terminals draw emoji and CJK double-width, so counting codepoints
+    under-measures the weather segment and the line still overflows. This
+    approximates the wide ranges rather than depending on a wcwidth library.
+    """
+    wide_ranges = (
+        (0x1100, 0x115F), (0x2E80, 0xA4CF), (0xAC00, 0xD7A3),
+        (0xF900, 0xFAFF), (0xFE30, 0xFE6F), (0xFF00, 0xFF60),
+        (0xFFE0, 0xFFE6), (0x1F300, 0x1F9FF), (0x1FA70, 0x1FAFF),
+    )
+    out, i = 0, 0
+    while i < len(text):
+        ch = text[i]
+        if ch == "\033":
+            end = text.find("m", i)
+            if end == -1:
+                break
+            i = end + 1
+            continue
+        code = ord(ch)
+        if code == 0xFE0F:  # variation selector: renders nothing on its own
+            i += 1
+            continue
+        out += 2 if any(lo <= code <= hi for lo, hi in wide_ranges) else 1
+        i += 1
+    return out
+
+
+def render(sections):
+    """Join the segments, dropping the least important ones to fit a budget."""
+    sep = f" {DIM}│{R} "
+    keep = dict(sections)
+
+    if WIDTH_BUDGET > 0:
+        for name in DROP_ORDER:
+            line = sep.join(v for n, v in sections if n in keep)
+            if visible_len(line) <= WIDTH_BUDGET:
+                break
+            keep.pop(name, None)
+
+    return sep.join(v for n, v in sections if n in keep)
 
 
 if __name__ == "__main__":

@@ -47,8 +47,24 @@ Every segment is independent: one that cannot be computed drops out rather than
 breaking the line. Colours run green to yellow to red as a value approaches its
 limit. Set `CLAUDE_STATUSLINE_WEATHER` to change the location from Hanoi.
 
-To drop a segment, delete its entry from the list in `main()`; the separators
-adjust themselves.
+To remove a segment entirely, delete its entry from the list in `main()`; the
+separators adjust themselves.
+
+### Fitting the terminal
+
+The full line is around 134 columns. When that does not fit, Claude Code
+truncates it with an ellipsis, so segments are dropped to fit instead — machine
+metrics first, since those are ambient and visible from any other terminal,
+while the session figures exist nowhere else. The order is `DROP_ORDER`.
+
+Width is detected by asking `/dev/tty` directly. `shutil.get_terminal_size` is
+no use here: stdout is a pipe, so it always returns its 80-column fallback.
+Set `CLAUDE_STATUSLINE_WIDTH` to override, or `0` to disable dropping and always
+print everything.
+
+Emoji and CJK are counted as two columns, because that is what terminals draw —
+measuring codepoints instead lets the line overflow by exactly the width of the
+weather icon.
 
 ## Things worth knowing
 
