@@ -20,3 +20,4 @@
 !.gitconfig
 !.config/i3blocks/
 !.config/claude/
+.config/claude/__pycache__/

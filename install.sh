@@ -56,8 +56,8 @@ usage() {
   cat <<'EOF'
 Usage: ./install.sh [options]
 
-Installs the Neovim setup from this repo. Re-runnable; replaced files are
-backed up rather than deleted.
+Installs the Neovim setup and the Claude Code status line from this repo.
+Re-runnable; replaced files are backed up rather than deleted.
 
 Options:
   -s, --status       Show which managed paths are linked to this repo, then exit.
@@ -324,6 +324,7 @@ link_path() {
 manifest() {
   cat <<EOF
 nvim|.config/nvim|$HOME/.config/nvim
+claude|.config/claude/statusline.py|$HOME/.claude/statusline.py
 shell|.zshrc|$HOME/.zshrc
 shell|.aliases|$HOME/.aliases
 git|.gitconfig|$HOME/.gitconfig
@@ -485,6 +486,30 @@ link_git() {
   else
     warn "skipping the git config"
   fi
+}
+
+# The status line is two halves: the script (a symlink, like everything else)
+# and two keys inside ~/.claude/settings.json. That file also holds machine-local
+# preferences and anything Claude Code writes itself, so it is merged rather than
+# linked. The merge is idempotent and backs up whatever was there.
+setup_claude() {
+  info "setting up the Claude Code status line"
+  link_group claude
+
+  local script="$HOME/.claude/statusline.py"
+  if [ "$DRY_RUN" -eq 1 ]; then
+    printf '%s  dry%s python3 %s --install-settings\n' "$YELLOW" "$RESET" "$script"
+    return 0
+  fi
+
+  if ! command -v python3 >/dev/null 2>&1; then
+    warn "python3 not found; the status line script cannot run"
+    return 0
+  fi
+  python3 "$script" --install-settings 2>&1 | sed 's/^/     /' || \
+    warn "could not write the Claude Code settings"
+
+  ok "status line ready — restart Claude Code, or open /hooks, to load it"
 }
 
 link_kitty() {
@@ -724,6 +749,7 @@ main() {
   cleanup_packer
   setup_python_provider
   install_plugins
+  setup_claude
 
   [ "$WITH_LSP" -eq 0 ]   || install_lsp_servers
   [ "$LINK_SHELL" -eq 0 ] || link_shell

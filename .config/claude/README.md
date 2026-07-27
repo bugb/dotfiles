@@ -1,45 +1,80 @@
 # claude
 
-Claude Code custom statusline.
+A status line for Claude Code. One file, works on macOS and Linux.
+
+```
+⚑ main* │ work/dotfiles │ Opus 5·max │ 🌤 +30°C │ cpu 28% │ ram 4.7G/16G │ disk 27G/228G │ ↑96.9M ↓354k │ ctx 42% │ $1.20 │ 5h 18% 7d 31%
+```
 
 ## Install
 
-Symlink or copy the script into place, then reference it from `~/.claude/settings.json`:
+`../../install.sh` does this as part of a normal run. By hand:
 
 ```bash
-mkdir -p ~/.claude
-ln -sf ~/.config/claude/statusline.sh ~/.claude/statusline.sh
+ln -sfn "$PWD/.config/claude/statusline.py" ~/.claude/statusline.py
+python3 ~/.claude/statusline.py --install-settings
 ```
 
-`~/.claude/settings.json`:
+Then **restart Claude Code, or open `/hooks` once**, so the new configuration
+loads. Until then the directory stays pinned to wherever the session started —
+see "following `cd`" below.
 
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bash ~/.claude/statusline.sh",
-    "padding": 0,
-    "refreshInterval": 30
-  }
-}
-```
+`--install-settings` merges two keys into `~/.claude/settings.json` and leaves
+everything else untouched. It backs the previous file up and is safe to re-run.
+That file is merged rather than symlinked because it also holds machine-local
+preferences and anything Claude Code writes to it itself.
 
-Restart Claude Code so the daemon picks up the new command.
+Requirements: `python3` (standard library only), `git`, and `curl` for the
+weather. Nothing else.
 
 ## What it shows
 
-`<cwd>  <branch>  <tokens>  <cost>  Hanoi <weather>  cpu <%>  ram <free/total>  disk <free/total>`
+| Segment | Notes |
+| --- | --- |
+| branch | red on `master`/`main`, green elsewhere, yellow short-sha when detached; `*` means the worktree is dirty |
+| directory | last two path components |
+| model | plus effort level, and `·nothink` / `·fast` when set |
+| weather | cached 30 minutes, refreshed by a detached background process |
+| cpu | 1-minute load average as a share of cores |
+| ram | available/total |
+| disk | free/total on the volume holding the working directory |
+| tokens | cumulative input/output for the session |
+| ctx | context window used |
+| cost | session cost in USD |
+| quota | 5-hour and 7-day plan usage, when the plan reports it |
 
-- Branch color: `master`/`main` = red, everything else = green.
-- CPU: instant sample from `/proc/stat` delta (0–100%).
-- RAM: `/proc/meminfo` `MemAvailable` / `MemTotal`.
-- Disk: `df -hP /` avail / total.
-- Weather: `wttr.in/Hanoi`, cached 30 min at `/tmp/claude_weather_hanoi.txt`, refreshed in background.
-- Session tokens: cumulative from the current transcript `.jsonl`, deduped by message id.
-- Cost: `cost.total_cost_usd` from the stdin JSON Claude Code passes.
+Every segment is independent: one that cannot be computed drops out rather than
+breaking the line. Colours run green to yellow to red as a value approaches its
+limit. Set `CLAUDE_STATUSLINE_WEATHER` to change the location from Hanoi.
 
-Thresholds (cpu / ram / disk %used): green < 75, yellow 75–89, red ≥ 90.
+To drop a segment, delete its entry from the list in `main()`; the separators
+adjust themselves.
 
-## Requirements
+## Things worth knowing
 
-`jq`, `curl`, GNU `awk`, `git`, `df`, `nproc`. All standard on Linux.
+**Colour is never the only signal.** The branch carries `⚑` on the default branch
+and `⎇` elsewhere, so it still reads correctly with a colour vision deficiency —
+red against green is the worst possible pair for that.
+
+**Following `cd`.** The payload Claude Code passes in carries the *session*
+directory, which does not move when you `cd`. Claude Code emits a `CwdChanged`
+event, but only when a hook for it is registered — so `--install-settings`
+registers one that records the new path, and the status line prefers it. This is
+why installing needs a restart to take effect.
+
+**Token counting.** The transcript repeats a message's usage record every time it
+is rewritten, up to six times, with identical values; counting each occurrence
+inflates the total by about half. Each message id is therefore counted once. Only
+the bytes appended since the previous render are parsed, so the cost of this does
+not grow with session length.
+
+**Memory.** "Available" means reclaimable-without-swapping on both platforms:
+`MemAvailable` on Linux, and free + inactive + speculative + purgeable on macOS.
+Note that `df /` on macOS reports the capacity of the sealed system volume, which
+can look far emptier than the disk really is — the figure here is the shared APFS
+container, which is the one that matters.
+
+**Speed.** Roughly 60 ms per render, most of it Python interpreter startup plus
+the `git diff` that detects a dirty worktree. Branch detection reads `.git/HEAD`
+directly, since `git rev-parse` measures ~15 ms against ~0.04 ms for the file
+read. Nothing blocks on the network.
