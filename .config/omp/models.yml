@@ -1,0 +1,59 @@
+# Migrated from ~/.codex/config.toml ([model_providers.codex] + auth.json).
+#
+# Codex TOML                     -> omp models.yml
+#   base_url                     -> baseUrl
+#   wire_api = "responses"       -> api: openai-responses
+#   requires_openai_auth = true  -> apiKey (Authorization: Bearer …)
+#   http_headers                 -> headers
+#   disable_response_storage     -> compat.supportsStore (sends store: false)
+#   model_context_window         -> contextWindow
+providers:
+  codex:
+    baseUrl: https://api.apikey.fan/v1
+    # Reads the same auth.json Codex uses, so the key lives in exactly one place.
+    apiKey: '!/bin/sed -n "s/.*\"OPENAI_API_KEY\": *\"\([^\"]*\)\".*/\1/p" /root/.codex/auth.json'
+    api: openai-responses
+    authHeader: true
+    headers:
+      x-openai-actor-authorization: apikey.fun
+    compat:
+      supportsStore: true
+      supportsReasoningEffort: true
+      # This gateway is not api.openai.com: do not try mid-session
+      # `configuration_update` items or 24h prompt-cache retention.
+      supportsConfigurationUpdate: false
+      supportsLongPromptCacheRetention: false
+    models:
+      - id: gpt-5.6-terra
+        name: GPT-5.6 Terra (codex)
+        reasoning: true
+        input: [text, image]
+        contextWindow: 1000000
+        maxTokens: 128000
+        cost:
+          input: 0
+          output: 0
+          cacheRead: 0
+          cacheWrite: 0
+      - id: gpt-6-astra
+        name: GPT-6 Astra (codex, review)
+        reasoning: true
+        input: [text, image]
+        contextWindow: 1000000
+        maxTokens: 128000
+        cost:
+          input: 0
+          output: 0
+          cacheRead: 0
+          cacheWrite: 0
+      - id: gpt-5.6-sol
+        name: GPT-5.6 Sol (codex)
+        reasoning: true
+        input: [text, image]
+        contextWindow: 1000000
+        maxTokens: 128000
+        cost:
+          input: 0
+          output: 0
+          cacheRead: 0
+          cacheWrite: 0

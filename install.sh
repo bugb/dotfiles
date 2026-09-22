@@ -22,6 +22,7 @@ LINK_SHELL=0
 LINK_GIT=0
 LINK_KITTY=0
 LINK_I3=0
+LINK_OMP=0
 STATUS_ONLY=0
 ASSUME_YES=0
 
@@ -72,6 +73,9 @@ Options:
                      added to the dependency list when this is passed.
       --link-kitty   Also link .config/kitty/kitty.conf into $HOME.
       --link-i3      Also link .config/i3 and .config/i3blocks (Linux only).
+      --link-omp     Also link the omp agent config into ~/.omp/agent: model
+                     roles, the codex provider, the plan/review agents and
+                     commands. See .config/omp/ARCHITECTURE.md.
       --all          Every group above, plus --with-lsp.
   -y, --yes          Do not prompt; assume yes. Prompts are skipped anyway when
                      stdin is not a terminal.
@@ -95,8 +99,9 @@ while [ $# -gt 0 ]; do
     --link-git)    LINK_GIT=1 ;;
     --link-kitty)  LINK_KITTY=1 ;;
     --link-i3)     LINK_I3=1 ;;
+    --link-omp)    LINK_OMP=1 ;;
     -s|--status)   STATUS_ONLY=1 ;;
-    --all)         WITH_LSP=1; LINK_SHELL=1; LINK_GIT=1; LINK_KITTY=1; LINK_I3=1 ;;
+    --all)         WITH_LSP=1; LINK_SHELL=1; LINK_GIT=1; LINK_KITTY=1; LINK_I3=1; LINK_OMP=1 ;;
     -y|--yes)      ASSUME_YES=1 ;;
     -h|--help)     usage; exit 0 ;;
     *)             err "unknown option: $1"; echo; usage; exit 2 ;;
@@ -331,6 +336,11 @@ git|.gitconfig|$HOME/.gitconfig
 kitty|.config/kitty/kitty.conf|$HOME/.config/kitty/kitty.conf
 i3|.config/i3|$HOME/.config/i3
 i3|.config/i3blocks|$HOME/.config/i3blocks
+omp|.config/omp/config.yml|$HOME/.omp/agent/config.yml
+omp|.config/omp/models.yml|$HOME/.omp/agent/models.yml
+omp|.config/omp/max.yml|$HOME/.omp/agent/max.yml
+omp|.config/omp/agents|$HOME/.omp/agent/agents
+omp|.config/omp/commands|$HOME/.omp/agent/commands
 EOF
 }
 
@@ -381,7 +391,7 @@ $(manifest)
 EOF
 
   printf '\nlinked = that path is this repo. Edit either side, same file.\n'
-  printf 'Apply a group with --link-shell / --link-git / --link-kitty / --link-i3, or --all.\n'
+  printf 'Apply a group with --link-shell / --link-git / --link-kitty / --link-i3 / --link-omp, or --all.\n'
 
   show_local_overrides
 }
@@ -536,6 +546,26 @@ link_i3() {
   fi
   info "linking the i3 config"
   link_group i3
+}
+
+# omp writes config.yml itself whenever a setting changes (/settings, /model,
+# `omp config set`). It rewrites in place rather than replacing the file, so the
+# symlink survives and the edit lands in this repo -- verified, not assumed.
+# The upshot is that `git diff` here is the audit trail for anything omp or an
+# upgrade changes. It also means comments in config.yml are deleted on the next
+# write; rationale belongs in .config/omp/ARCHITECTURE.md.
+link_omp() {
+  info "linking the omp agent config"
+  if ! command -v omp >/dev/null 2>&1; then
+    warn "omp is not installed; linking anyway, it will pick these up when it is"
+  fi
+  link_group omp
+
+  # The codex provider reads its key from ~/.codex/auth.json at request time, so
+  # no secret is stored in this repo. Without that file the provider cannot auth.
+  if [ ! -f "$HOME/.codex/auth.json" ]; then
+    warn "~/.codex/auth.json is missing; the codex provider has no API key to read"
+  fi
 }
 
 # --------------------------------------------------------------- neovim ----
@@ -756,6 +786,7 @@ main() {
   [ "$LINK_GIT" -eq 0 ]   || link_git
   [ "$LINK_KITTY" -eq 0 ] || link_kitty
   [ "$LINK_I3" -eq 0 ]    || link_i3
+  [ "$LINK_OMP" -eq 0 ]   || link_omp
 
   verify
   show_status

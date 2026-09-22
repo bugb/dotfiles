@@ -20,4 +20,5 @@
 !.gitconfig
 !.config/i3blocks/
 !.config/claude/
+!.config/omp/
 .config/claude/__pycache__/
