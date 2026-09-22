@@ -11,7 +11,7 @@ providers:
   codex:
     baseUrl: https://api.apikey.fan/v1
     # Reads the same auth.json Codex uses, so the key lives in exactly one place.
-    apiKey: '!/bin/sed -n "s/.*\"OPENAI_API_KEY\": *\"\([^\"]*\)\".*/\1/p" /root/.codex/auth.json'
+    apiKey: '!/bin/sed -n "s/.*\"OPENAI_API_KEY\": *\"\([^\"]*\)\".*/\1/p" $HOME/.codex/auth.json'
     api: openai-responses
     authHeader: true
     headers:

@@ -140,13 +140,19 @@ it never leaks into ordinary work.
 `models.yml` contains no literal key. It resolves one at request time:
 
 ```yaml
-apiKey: '!/bin/sed -n "s/.*\"OPENAI_API_KEY\": *\"\([^\"]*\)\".*/\1/p" /root/.codex/auth.json'
+apiKey: '!/bin/sed -n "s/.*\"OPENAI_API_KEY\": *\"\([^\"]*\)\".*/\1/p" $HOME/.codex/auth.json'
 ```
 
 Codex CLI and omp therefore share one source of truth, and this repo stays safe
-to commit. `/bin/sed` is spelled absolutely on purpose: `jq` on this host is an
-omp-internal shim rather than a real binary, and secret resolution must not
-depend on the harness it is configuring.
+to commit. Two details in that line are deliberate:
+
+- **`$HOME`, not a hardcoded path.** The secret command runs through a shell, so
+  `$HOME` expands — verified by pointing it at a nonexistent file and watching
+  auth fail, which also proves the key is resolved per request rather than
+  cached. A hardcoded `/root` would work only on this box.
+- **`/bin/sed`, spelled absolutely.** `jq` on this host is an omp-internal shim
+  rather than a real binary, and secret resolution must not depend on the
+  harness it is configuring.
 
 ## Codex TOML settings that did not migrate
 
