@@ -12,6 +12,7 @@
 !.config/kitty/kitty.conf
 !.aliases
 !.zshrc
+!.tmux.conf
 !README.md
 !MAC.md
 !ARCHITECTURE.md

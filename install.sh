@@ -23,6 +23,7 @@ LINK_GIT=0
 LINK_KITTY=0
 LINK_I3=0
 LINK_OMP=0
+LINK_TMUX=0
 STATUS_ONLY=0
 ASSUME_YES=0
 
@@ -76,6 +77,8 @@ Options:
       --link-omp     Also link the omp agent config into ~/.omp/agent: model
                      roles, the codex provider, the plan/review agents and
                      commands. See .config/omp/ARCHITECTURE.md.
+      --link-tmux    Also link .tmux.conf into $HOME, and reload it if a tmux
+                     server is already running.
       --all          Every group above, plus --with-lsp.
   -y, --yes          Do not prompt; assume yes. Prompts are skipped anyway when
                      stdin is not a terminal.
@@ -100,8 +103,9 @@ while [ $# -gt 0 ]; do
     --link-kitty)  LINK_KITTY=1 ;;
     --link-i3)     LINK_I3=1 ;;
     --link-omp)    LINK_OMP=1 ;;
+    --link-tmux)   LINK_TMUX=1 ;;
     -s|--status)   STATUS_ONLY=1 ;;
-    --all)         WITH_LSP=1; LINK_SHELL=1; LINK_GIT=1; LINK_KITTY=1; LINK_I3=1; LINK_OMP=1 ;;
+    --all)         WITH_LSP=1; LINK_SHELL=1; LINK_GIT=1; LINK_KITTY=1; LINK_I3=1; LINK_OMP=1; LINK_TMUX=1 ;;
     -y|--yes)      ASSUME_YES=1 ;;
     -h|--help)     usage; exit 0 ;;
     *)             err "unknown option: $1"; echo; usage; exit 2 ;;
@@ -341,6 +345,7 @@ omp|.config/omp/models.yml|$HOME/.omp/agent/models.yml
 omp|.config/omp/max.yml|$HOME/.omp/agent/max.yml
 omp|.config/omp/agents|$HOME/.omp/agent/agents
 omp|.config/omp/commands|$HOME/.omp/agent/commands
+tmux|.tmux.conf|$HOME/.tmux.conf
 EOF
 }
 
@@ -391,7 +396,7 @@ $(manifest)
 EOF
 
   printf '\nlinked = that path is this repo. Edit either side, same file.\n'
-  printf 'Apply a group with --link-shell / --link-git / --link-kitty / --link-i3 / --link-omp, or --all.\n'
+  printf 'Apply a group with --link-shell / --link-git / --link-kitty / --link-i3 / --link-omp / --link-tmux, or --all.\n'
 
   show_local_overrides
 }
@@ -565,6 +570,30 @@ link_omp() {
   # no secret is stored in this repo. Without that file the provider cannot auth.
   if [ ! -f "$HOME/.codex/auth.json" ]; then
     warn "~/.codex/auth.json is missing; the codex provider has no API key to read"
+  fi
+}
+
+# tmux only reads .tmux.conf when a server starts, so an existing session keeps
+# the old settings until it is told otherwise. Reload it here rather than making
+# the user find out later that scrolling still does not work.
+link_tmux() {
+  info "linking the tmux config"
+  if ! command -v tmux >/dev/null 2>&1; then
+    warn "tmux is not installed; linking anyway, it will be read when tmux is"
+  fi
+  link_group tmux
+
+  if [ "$DRY_RUN" -eq 1 ]; then
+    printf '%s  dry%s tmux source-file %s (if a server is running)\n' \
+      "$YELLOW" "$RESET" "$HOME/.tmux.conf"
+    return 0
+  fi
+  if command -v tmux >/dev/null 2>&1 && tmux list-sessions >/dev/null 2>&1; then
+    if tmux source-file "$HOME/.tmux.conf" 2>/dev/null; then
+      ok "reloaded the running tmux server"
+    else
+      warn "could not reload tmux; run: tmux source-file ~/.tmux.conf"
+    fi
   fi
 }
 
@@ -787,6 +816,7 @@ main() {
   [ "$LINK_KITTY" -eq 0 ] || link_kitty
   [ "$LINK_I3" -eq 0 ]    || link_i3
   [ "$LINK_OMP" -eq 0 ]   || link_omp
+  [ "$LINK_TMUX" -eq 0 ]  || link_tmux
 
   verify
   show_status
