@@ -35,8 +35,8 @@ finding: report both positions with their evidence and let the user decide.
 
 Write the settled plan to `local://plan.md` and build a todo list from it, one
 item per slice plus its verification. Then implement with `implementer` and
-peer-review with `codex-review` — the vendor that did not write the code reviews
-it.
+peer-review with `astra-high-review` — the vendor that did not write the code
+reviews it.
 
 Never skip straight from a single model's plan to implementation. The whole point
 is that the two vendors fail differently.

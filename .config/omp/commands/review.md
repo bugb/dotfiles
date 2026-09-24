@@ -2,7 +2,7 @@
 description: Have codex review the current change (uncommitted diff, or $ARGUMENTS)
 ---
 
-Dispatch the `codex-review` agent over the work in progress.
+Dispatch the `astra-high-review` agent over the work in progress.
 
 Scope, in order of preference:
 
@@ -27,7 +27,7 @@ Give the agent:
 Then act on the result:
 
 - `APPROVE` with no findings → report it and continue.
-- `CHANGES_REQUIRED` → fix every finding, then dispatch a fresh `codex-review`
+- `CHANGES_REQUIRED` → fix every finding, then dispatch a fresh `astra-high-review`
   on the fixed state. Repeat until it approves. Do not argue with a finding you
   have not first verified in the code; if it is genuinely wrong, say why with
   evidence and move on.

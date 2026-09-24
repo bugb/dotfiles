@@ -61,7 +61,8 @@ the token spend and gain nothing from reasoning depth.
 | `plan-codex` | `codex/gpt-6-astra:high` | no |
 | `plan-claude` | `claude/claude-opus-5:xhigh` | no |
 | `implementer` | `claude/claude-opus-5:xhigh` | yes |
-| `codex-review` | `codex/gpt-6-astra:high` | no |
+| `astra-high-review` | `codex/gpt-6-astra:high` | no |
+| `sol-high-review` | `codex/gpt-6-sol:high` | no |
 
 The reviewer is always the vendor that did **not** write the code.
 
@@ -102,7 +103,7 @@ reports instead.
            cap: 3 rounds, then report both positions
 
 implementer   writes exactly the settled slice
-codex-review  peer review -> APPROVE | CHANGES_REQUIRED + findings
+astra-high-review  peer review -> APPROVE | CHANGES_REQUIRED + findings
               CHANGES_REQUIRED -> fix -> review the FIXED state again
 prove         reproduce, fix, confirm the reproduction stops triggering
 ```
@@ -217,7 +218,7 @@ config.
 config.yml    roles, agent model overrides, approval, compaction, status line
 models.yml    the codex provider and its three models
 max.yml       hard-problem overlay, loaded per run with --config
-agents/       plan-codex, plan-claude, implementer, codex-review
+agents/       plan-codex, plan-claude, implementer, astra-high-review, sol-high-review
 commands/     /plan (consensus), /review (diff review loop), /ship (full pipeline)
 ```
 

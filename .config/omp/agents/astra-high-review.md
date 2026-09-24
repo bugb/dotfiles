@@ -1,5 +1,5 @@
 ---
-name: codex-review
+name: astra-high-review
 description: Codex reviews work that is already finished. Read-only, evidence-backed, verdict-bearing. Use after a change is complete and before committing, pushing, or opening a PR.
 model: codex/gpt-6-astra
 tools: read, grep, glob, bash, lsp, hub

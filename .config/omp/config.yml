@@ -24,7 +24,7 @@ task:
     plan-codex: codex/gpt-6-astra:high
     plan-claude: claude/claude-opus-5:xhigh
     implementer: claude/claude-opus-5:xhigh
-    codex-review: codex/gpt-6-astra:high
+    astra-high-review: codex/gpt-6-astra:high
     reviewer: codex/gpt-6-astra:high
     security-reviewer: codex/gpt-6-astra:high
     scout: codex/gpt-6-sol

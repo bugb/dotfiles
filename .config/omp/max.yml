@@ -15,7 +15,7 @@ task:
     plan-codex: codex/gpt-6-astra:max
     plan-claude: claude/claude-opus-5:max
     implementer: claude/claude-opus-5:max
-    codex-review: codex/gpt-6-astra:max
+    astra-high-review: codex/gpt-6-astra:max
     reviewer: codex/gpt-6-astra:max
     security-reviewer: codex/gpt-6-astra:max
     # Deliberately unchanged: research and mechanical edits gain nothing from

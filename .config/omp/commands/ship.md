@@ -23,7 +23,7 @@ Dispatch independent slices as one `tasks[]` batch. Every task instruction must
 say: skip formatters, skip linters, skip the project test suite. Agents that
 validate mid-flight block on each other's half-finished edits.
 
-As each slice lands, dispatch `codex-review` on **that slice alone**, while the
+dispatch `astra-high-review` on **that slice alone**, while the
 other slices are still being written. Reviewing a small change against a fresh
 context finds more than reviewing the union at the end, and it finds it while
 the decision is still cheap to reverse.
@@ -47,7 +47,7 @@ code outranks a careful read. A fix that only passed review is unverified.
 ## 4. Re-review the fix
 
 The last change you make is the one nobody has looked at. Every time you act on
-findings, dispatch a fresh `codex-review` on the fixed state. Loop until it
+findings, dispatch a fresh `astra-high-review` on the fixed state. Loop until it
 approves with zero findings. Do not carry an open finding past a phase boundary.
 
 ## 5. Keep the driver's context clean
