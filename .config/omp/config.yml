@@ -1,7 +1,7 @@
 modelRoles:
   default: codex/gpt-6-astra:high
   task: codex/gpt-5.6-terra
-  smol: codex/gpt-5.6-sol
+  smol: codex/gpt-6-sol
   slow: codex/gpt-6-astra:high
   plan: codex/gpt-6-astra:high
 symbolPreset: unicode
@@ -22,13 +22,13 @@ task:
   maxConcurrency: 6
   agentModelOverrides:
     plan-codex: codex/gpt-6-astra:high
-    plan-claude: anthropic/claude-opus-5:xhigh
-    implementer: anthropic/claude-opus-5:xhigh
+    plan-claude: claude/claude-opus-5:xhigh
+    implementer: claude/claude-opus-5:xhigh
     codex-review: codex/gpt-6-astra:high
     reviewer: codex/gpt-6-astra:high
     security-reviewer: codex/gpt-6-astra:high
-    scout: codex/gpt-5.6-sol
-    sonic: codex/gpt-5.6-sol
+    scout: codex/gpt-6-sol
+    sonic: codex/gpt-6-sol
 github:
   enabled: true
 statusLine:
@@ -38,3 +38,5 @@ statusLine:
     - git
   rightSegments:
     - token_total
+dev:
+  autoqaConsent: granted

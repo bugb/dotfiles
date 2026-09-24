@@ -1,7 +1,7 @@
 ---
 name: implementer
 description: Writes the code for an already-agreed plan slice. Opus at xhigh. Implements exactly the agreed scope, no more.
-model: anthropic/claude-opus-5:xhigh
+model: claude/claude-opus-5:xhigh
 tools: read, write, edit, grep, glob, bash, lsp, ast_edit, hub, todo
 ---
 

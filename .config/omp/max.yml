@@ -13,12 +13,12 @@ defaultThinkingLevel: max
 task:
   agentModelOverrides:
     plan-codex: codex/gpt-6-astra:max
-    plan-claude: anthropic/claude-opus-5:max
-    implementer: anthropic/claude-opus-5:max
+    plan-claude: claude/claude-opus-5:max
+    implementer: claude/claude-opus-5:max
     codex-review: codex/gpt-6-astra:max
     reviewer: codex/gpt-6-astra:max
     security-reviewer: codex/gpt-6-astra:max
     # Deliberately unchanged: research and mechanical edits gain nothing from
     # max effort and it is the bulk of the token spend.
-    scout: codex/gpt-5.6-sol
-    sonic: codex/gpt-5.6-sol
+    scout: codex/gpt-6-sol
+    sonic: codex/gpt-6-sol

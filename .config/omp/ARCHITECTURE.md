@@ -47,7 +47,7 @@ So `api: openai-responses` is correct, not a workaround.
 |---|---|---|
 | `default` | `codex/gpt-6-astra:high` | driver: plans, decides, integrates |
 | `task` | `codex/gpt-5.6-terra` | generic subagents, the cheap bulk |
-| `smol` | `codex/gpt-5.6-sol` | titles, summaries, throwaway lookups |
+| `smol` | `codex/gpt-6-sol` | titles, summaries, throwaway lookups |
 | `slow`, `plan` | `codex/gpt-6-astra:high` | deep reasoning on request |
 
 Big model where judgment compounds, cheap models where volume lives. Research
@@ -59,11 +59,15 @@ the token spend and gain nothing from reasoning depth.
 | agent | model | writes code? |
 |---|---|---|
 | `plan-codex` | `codex/gpt-6-astra:high` | no |
-| `plan-claude` | `anthropic/claude-opus-5:xhigh` | no |
-| `implementer` | `anthropic/claude-opus-5:xhigh` | yes |
+| `plan-claude` | `claude/claude-opus-5:xhigh` | no |
+| `implementer` | `claude/claude-opus-5:xhigh` | yes |
 | `codex-review` | `codex/gpt-6-astra:high` | no |
 
 The reviewer is always the vendor that did **not** write the code.
+
+Opus 5.5 (`claude-opus-5-5`) requires gateway group access. The configured key
+returned `model_not_found` when checked on 2026-09-23; keep Opus 5 selected until
+a live request verifies 5.5 access. GPT-6 Sol remains the lightweight model.
 
 ### Why the planners default to DISAGREE
 
@@ -158,7 +162,7 @@ to commit. Two details in that line are deliberate:
 
 | setting | why |
 |---|---|
-| `review_model = "gpt-5.6-astra"` | no such model on the gateway; `/v1/models` offers `gpt-6-astra`, `gpt-5.6-sol`, `gpt-5.6-terra`. Reviewers use `gpt-6-astra`. |
+| `review_model = "gpt-5.6-astra"` | no such model on the gateway at migration; reviewers use `gpt-6-astra`. |
 | `mcp_servers.github` | `/root/.local/bin/github-mcp-codex` does not exist here; omp's native `github` tool is enabled instead. |
 | `[projects."/root/poly-rust"]` | directory does not exist; `approvalMode: yolo` covers trust anyway. |
 | `windows_wsl_setup_acknowledged`, `network_access`, `tui.model_availability_nux`, `notice.hide_rate_limit_model_nudge` | no omp equivalent; they are Codex-TUI bookkeeping, not behaviour. |

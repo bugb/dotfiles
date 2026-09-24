@@ -1,7 +1,7 @@
 ---
 name: plan-claude
 description: Claude half of the two-vendor plan consensus. Produces or critiques an implementation plan. Never writes code.
-model: anthropic/claude-opus-5:xhigh
+model: claude/claude-opus-5:xhigh
 tools: read, grep, glob, bash, lsp, hub
 output:
   type: object
