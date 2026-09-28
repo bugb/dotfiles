@@ -13,8 +13,8 @@ defaultThinkingLevel: max
 task:
   agentModelOverrides:
     plan-codex: codex/gpt-6-astra:max
-    plan-claude: claude/claude-opus-5:max
-    implementer: claude/claude-opus-5:max
+    plan-claude: claude/claude-opus-5-5:max
+    implementer: claude/claude-opus-5-5:max
     astra-high-review: codex/gpt-6-astra:max
     reviewer: codex/gpt-6-astra:max
     security-reviewer: codex/gpt-6-astra:max

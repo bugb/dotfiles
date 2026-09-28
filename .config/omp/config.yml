@@ -27,8 +27,8 @@ task:
   maxConcurrency: 6
   agentModelOverrides:
     plan-codex: codex/gpt-6-astra:high
-    plan-claude: claude/claude-opus-5:xhigh
-    implementer: claude/claude-opus-5:xhigh
+    plan-claude: claude/claude-opus-5-5:xhigh
+    implementer: claude/claude-opus-5-5:xhigh
     astra-high-review: codex/gpt-6-astra:high
     reviewer: codex/gpt-6-astra:high
     security-reviewer: codex/gpt-6-astra:high
@@ -45,3 +45,5 @@ statusLine:
     - token_total
 dev:
   autoqaConsent: granted
+telemetry:
+  otlpExportEnabled: false
