@@ -14,8 +14,13 @@ defaultThinkingLevel: medium
 tools:
   approvalMode: yolo
 compaction:
-  thresholdTokens: 500000
+  thresholdTokens: 120000
   thresholdPercent: 95
+  methodOrder:
+    - remote
+    - handoff
+    - shake
+    - soft
 goal:
   enabled: true
 task:
