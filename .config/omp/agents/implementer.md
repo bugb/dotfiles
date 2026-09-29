@@ -1,7 +1,7 @@
 ---
 name: implementer
-description: Writes the code for an already-agreed plan slice. Sonnet 5 at xhigh. Implements exactly the agreed scope, no more.
-model: claude/claude-sonnet-5:xhigh
+description: Writes the code for an already-agreed plan slice. Sonnet 5 at high. Implements exactly the agreed scope, no more.
+model: claude/claude-sonnet-5:high
 tools: read, write, edit, grep, glob, bash, lsp, ast_edit, hub, todo
 ---
 

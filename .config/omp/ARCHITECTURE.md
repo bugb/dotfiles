@@ -59,8 +59,8 @@ the token spend and gain nothing from reasoning depth.
 | agent | model | writes code? |
 |---|---|---|
 | `plan-codex` | `codex/gpt-6-astra:high` | no |
-| `plan-claude` | `claude/claude-sonnet-5:xhigh` | no |
-| `implementer` | `claude/claude-sonnet-5:xhigh` | yes |
+| `plan-claude` | `claude/claude-sonnet-5:high` | no |
+| `implementer` | `claude/claude-sonnet-5:high` | yes |
 | `astra-high-review` | `codex/gpt-6-astra:high` | no |
 | `sol-high-review` | `codex/gpt-6-sol:high` | no |
 

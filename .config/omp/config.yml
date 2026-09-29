@@ -27,8 +27,8 @@ task:
   maxConcurrency: 6
   agentModelOverrides:
     plan-codex: codex/gpt-6-astra:high
-    plan-claude: claude/claude-sonnet-5:xhigh
-    implementer: claude/claude-sonnet-5:xhigh
+    plan-claude: claude/claude-sonnet-5:high
+    implementer: claude/claude-sonnet-5:high
     astra-high-review: codex/gpt-6-astra:high
     reviewer: codex/gpt-6-astra:high
     security-reviewer: codex/gpt-6-astra:high
