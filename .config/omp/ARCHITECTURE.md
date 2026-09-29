@@ -1,4 +1,4 @@
-# omp setup: two-vendor plan consensus, opus implements, codex reviews
+# omp setup: two-vendor plan consensus, sonnet implements, codex reviews
 
 Migrated from a Codex CLI `config.toml` + a Claude Code "call codex to review"
 skill. This file explains why each piece is shaped the way it is, so the
@@ -59,16 +59,17 @@ the token spend and gain nothing from reasoning depth.
 | agent | model | writes code? |
 |---|---|---|
 | `plan-codex` | `codex/gpt-6-astra:high` | no |
-| `plan-claude` | `claude/claude-opus-5:xhigh` | no |
-| `implementer` | `claude/claude-opus-5:xhigh` | yes |
+| `plan-claude` | `claude/claude-sonnet-5:xhigh` | no |
+| `implementer` | `claude/claude-sonnet-5:xhigh` | yes |
 | `astra-high-review` | `codex/gpt-6-astra:high` | no |
 | `sol-high-review` | `codex/gpt-6-sol:high` | no |
 
 The reviewer is always the vendor that did **not** write the code.
 
-Opus 5.5 (`claude-opus-5-5`) requires gateway group access. The configured key
-returned `model_not_found` when checked on 2026-09-23; keep Opus 5 selected until
-a live request verifies 5.5 access. GPT-6 Sol remains the lightweight model.
+Claude agents run on Sonnet 5 (`claude-sonnet-5`); Opus is no longer used and its
+models are not registered. The gateway serves no Sonnet 5.5 (`claude-sonnet-5-5`
+returned `model_not_found` on 2026-09-29) — switch when a live request succeeds.
+GPT-6 Sol remains the lightweight model.
 
 ### Why the planners default to DISAGREE
 
