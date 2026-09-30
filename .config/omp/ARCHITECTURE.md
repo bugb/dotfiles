@@ -15,7 +15,7 @@ until it has been executed rather than merely read.
 ```
 omp driver (openai-codex/gpt-6-astra)
   plan      plan-codex + plan-claude  (both Codex models today)
-  code      implementer (gpt-6-sol wrapper) --> claude -p --model sonnet
+  code      implementer (gpt-6-sol wrapper) --> claude -p --model claude-sonnet-5-5
   review    astra-high-review (Codex)  --CHANGES_REQUIRED-->  implementer
                                           --resume <session_id>--> same Claude session
   prove     driver runs the repro / tests
@@ -48,9 +48,9 @@ The apikey.fan gateway providers (`codex`, `claude`) are commented out in
 
 Claude is not an omp model any more. It is reached only through the Claude
 Code CLI (`claude -p`, Claude's own login in `~/.claude/.credentials.json`),
-and only for writing code. `--model sonnet` is an alias, so it follows the
-newest Sonnet automatically (today `claude-sonnet-5`; Claude Code 2.1.280 did
-not recognise `claude-sonnet-5-5` on 2026-09-30). That keeps the writer and the
+and only for writing code, pinned to `--model claude-sonnet-5-5` (Sonnet 5.5).
+That id needs Claude Code ≥ 2.1.285 — 2.1.280 rejected it as
+`unrecognized_model` on 2026-09-30; update with `claude update`. That keeps the writer and the
 reviewer on different vendors. Planning is the exception: `plan-claude` runs on
 Codex `gpt-6-sol`, so plan consensus is two OpenAI models, which share more
 blind spots than two vendors — lean on the "running the code is proof" rule.
@@ -61,7 +61,7 @@ blind spots than two vendors — lean on the "running the code is proof" rule.
 omp login openai-codex-device   # headless / over SSH: prints a code to enter in a browser
 omp login openai-codex          # when a local browser can take the redirect
 ~/dotfiles/.config/omp/check-models.sh   # every configured selector must print "ok"
-claude -p "Reply with exactly: ok" --model sonnet --output-format json   # Claude Code logged in
+claude -p "Reply with exactly: ok" --model claude-sonnet-5-5 --output-format json   # Claude Code logged in
 ```
 
 `check-models.sh` exits non-zero and lists what the provider actually serves if
@@ -93,7 +93,7 @@ the token spend and gain nothing from reasoning depth.
 |---|---|---|
 | `plan-codex` | `openai-codex/gpt-6-astra:high` | no |
 | `plan-claude` | `openai-codex/gpt-6-sol:high` | no |
-| `implementer` | `openai-codex/gpt-6-sol:medium` → **Claude Code CLI** (`claude -p --model sonnet`) | Claude does |
+| `implementer` | `openai-codex/gpt-6-sol:medium` → **Claude Code CLI** (`claude -p --model claude-sonnet-5-5`) | Claude does |
 | `astra-high-review` | `openai-codex/gpt-6-astra:high` | no |
 | `sol-high-review` | `openai-codex/gpt-6-sol:high` | no |
 

@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: Gets an already-agreed plan slice written by the Claude Code CLI (`claude -p --model sonnet`, Claude's own login), then reports exactly what changed. Also relays review findings back into the SAME Claude session to fix them. Never writes the code itself.
+description: Gets an already-agreed plan slice written by the Claude Code CLI (`claude -p --model claude-sonnet-5-5`, Claude's own login), then reports exactly what changed. Also relays review findings back into the SAME Claude session to fix them. Never writes the code itself.
 model: openai-codex/gpt-6-sol:medium
 tools: read, grep, glob, bash
 ---
@@ -43,7 +43,7 @@ always on the tool's `PATH`:
 ```bash
 C="$(command -v claude || echo "$HOME/.local/bin/claude")"
 cd <repo> && timeout 3600 "$C" -p "$(cat /tmp/omp-claude-<slice>.md)" \
-  --model sonnet --permission-mode bypassPermissions --output-format json \
+  --model claude-sonnet-5-5 --permission-mode bypassPermissions --output-format json \
   > /tmp/omp-claude-<slice>.json
 ```
 
@@ -59,7 +59,7 @@ so Claude keeps its context of the change:
 ```bash
 C="$(command -v claude || echo "$HOME/.local/bin/claude")"
 cd <repo> && timeout 3600 "$C" -p "$(cat /tmp/omp-claude-<slice>-fix<N>.md)" \
-  --resume <session_id> --model sonnet --permission-mode bypassPermissions \
+  --resume <session_id> --model claude-sonnet-5-5 --permission-mode bypassPermissions \
   --output-format json > /tmp/omp-claude-<slice>-fix<N>.json
 ```
 
