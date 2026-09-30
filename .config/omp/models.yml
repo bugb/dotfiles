@@ -7,81 +7,89 @@
 #   http_headers                 -> headers
 #   disable_response_storage     -> compat.supportsStore (sends store: false)
 #   model_context_window         -> contextWindow
-providers:
-  codex:
-    baseUrl: https://api.apikey.fan/v1
-    # Reads the same auth.json Codex uses, so the key lives in exactly one place.
-    apiKey: '!/bin/sed -n "s/.*\"OPENAI_API_KEY\": *\"\([^\"]*\)\".*/\1/p" $HOME/.codex/auth.json'
-    api: openai-responses
-    authHeader: true
-    headers:
-      x-openai-actor-authorization: apikey.fun
-    compat:
-      supportsStore: true
-      supportsReasoningEffort: true
-      # This gateway is not api.openai.com: do not try mid-session
-      # `configuration_update` items or 24h prompt-cache retention.
-      supportsConfigurationUpdate: false
-      supportsLongPromptCacheRetention: false
-    models:
-      - id: gpt-5.6-terra
-        name: GPT-5.6 Terra (codex)
-        reasoning: true
-        input: [text, image]
-        contextWindow: 1000000
-        maxTokens: 128000
-        cost:
-          input: 0
-          output: 0
-          cacheRead: 0
-          cacheWrite: 0
-      - id: gpt-6-astra
-        name: GPT-6 Astra (codex, review)
-        reasoning: true
-        input: [text, image]
-        contextWindow: 1000000
-        maxTokens: 128000
-        cost:
-          input: 0
-          output: 0
-          cacheRead: 0
-          cacheWrite: 0
-      - id: gpt-6.1-sol
-        name: GPT-6.1 Sol (codex)
-        reasoning: true
-        input: [text, image]
-        contextWindow: 1000000
-        maxTokens: 128000
-        cost:
-          input: 0
-          output: 0
-          cacheRead: 0
-          cacheWrite: 0
+# Gateway providers DISABLED 2026-09-30: every model now goes through omp's
+# built-in `openai-codex` provider (ChatGPT OAuth — `omp login openai-codex`,
+# or `omp login openai-codex-device` on a headless box). The apikey.fan
+# `codex` and `claude` providers below are kept commented out for rollback:
+# uncomment them and point the roles in config.yml / max.yml / agents/*.md
+# back at `codex/…` and `claude/…`.
+providers: {}
 
-  # Claude through the same gateway, on an API key rather than a Claude Pro/Max
-  # OAuth subscription token. Anthropic's consumer subscription is licensed for
-  # use through their own clients; driving it from a third-party harness is a
-  # terms problem, and an API key is the supported route. omp's stored
-  # `anthropic` OAuth credential is removed so it cannot be selected by accident.
-  #
-  # The gateway speaks both wires; the native Anthropic one is used so extended
-  # thinking and tool-use fidelity survive.
-  claude:
-    baseUrl: https://api.apikey.fan
-    apiKey: '!/bin/sed -n "s/.*\"ANTHROPIC_API_KEY\": *\"\([^\"]*\)\".*/\1/p" $HOME/.apikey-fan/auth.json'
-    api: anthropic-messages
-    models:
-      - id: claude-sonnet-5
-        name: Claude Sonnet 5 (gateway)
-        reasoning: true
-        input: [text, image]
-        contextWindow: 1000000
-        maxTokens: 128000
-        cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}
-      - id: claude-haiku-4-5
-        name: Claude Haiku 4.5 (gateway)
-        reasoning: true
-        input: [text, image]
-        contextWindow: 200000
-        maxTokens: 64000
-        cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}
+# providers:
+#   codex:
+#     baseUrl: https://api.apikey.fan/v1
+#     # Reads the same auth.json Codex uses, so the key lives in exactly one place.
+#     apiKey: '!/bin/sed -n "s/.*\"OPENAI_API_KEY\": *\"\([^\"]*\)\".*/\1/p" $HOME/.codex/auth.json'
+#     api: openai-responses
+#     authHeader: true
+#     headers:
+#       x-openai-actor-authorization: apikey.fun
+#     compat:
+#       supportsStore: true
+#       supportsReasoningEffort: true
+#       # This gateway is not api.openai.com: do not try mid-session
+#       # `configuration_update` items or 24h prompt-cache retention.
+#       supportsConfigurationUpdate: false
+#       supportsLongPromptCacheRetention: false
+#     models:
+#       - id: gpt-5.6-terra
+#         name: GPT-5.6 Terra (codex)
+#         reasoning: true
+#         input: [text, image]
+#         contextWindow: 1000000
+#         maxTokens: 128000
+#         cost:
+#           input: 0
+#           output: 0
+#           cacheRead: 0
+#           cacheWrite: 0
+#       - id: gpt-6-astra
+#         name: GPT-6 Astra (codex, review)
+#         reasoning: true
+#         input: [text, image]
+#         contextWindow: 1000000
+#         maxTokens: 128000
+#         cost:
+#           input: 0
+#           output: 0
+#           cacheRead: 0
+#           cacheWrite: 0
+#       - id: gpt-6.1-sol
+#         name: GPT-6.1 Sol (codex)
+#         reasoning: true
+#         input: [text, image]
+#         contextWindow: 1000000
+#         maxTokens: 128000
+#         cost:
+#           input: 0
+#           output: 0
+#           cacheRead: 0
+#           cacheWrite: 0
+#
+#   # Claude through the same gateway, on an API key rather than a Claude Pro/Max
+#   # OAuth subscription token. Anthropic's consumer subscription is licensed for
+#   # use through their own clients; driving it from a third-party harness is a
+#   # terms problem, and an API key is the supported route. omp's stored
+#   # `anthropic` OAuth credential is removed so it cannot be selected by accident.
+#   #
+#   # The gateway speaks both wires; the native Anthropic one is used so extended
+#   # thinking and tool-use fidelity survive.
+#   claude:
+#     baseUrl: https://api.apikey.fan
+#     apiKey: '!/bin/sed -n "s/.*\"ANTHROPIC_API_KEY\": *\"\([^\"]*\)\".*/\1/p" $HOME/.apikey-fan/auth.json'
+#     api: anthropic-messages
+#     models:
+#       - id: claude-sonnet-5
+#         name: Claude Sonnet 5 (gateway)
+#         reasoning: true
+#         input: [text, image]
+#         contextWindow: 1000000
+#         maxTokens: 128000
+#         cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}
+#       - id: claude-haiku-4-5
+#         name: Claude Haiku 4.5 (gateway)
+#         reasoning: true
+#         input: [text, image]
+#         contextWindow: 200000
+#         maxTokens: 64000
+#         cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}

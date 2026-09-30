@@ -5,20 +5,20 @@
 #
 # Loaded per run, so it never leaks into normal work.
 modelRoles:
-  default: codex/gpt-6-astra:max
-  slow: codex/gpt-6-astra:max
-  plan: codex/gpt-6-astra:max
+  default: openai-codex/gpt-6-astra:max
+  slow: openai-codex/gpt-6-astra:max
+  plan: openai-codex/gpt-6-astra:max
   # Subagents still default to terra; the roles below are what actually think.
 defaultThinkingLevel: max
 task:
   agentModelOverrides:
-    plan-codex: codex/gpt-6-astra:max
-    plan-claude: claude/claude-sonnet-5:max
-    implementer: claude/claude-sonnet-5:max
-    astra-high-review: codex/gpt-6-astra:max
-    reviewer: codex/gpt-6-astra:max
-    security-reviewer: codex/gpt-6-astra:max
+    plan-codex: openai-codex/gpt-6-astra:max
+    plan-claude: openai-codex/gpt-6.1-sol:max
+    implementer: openai-codex/gpt-6.1-sol:max
+    astra-high-review: openai-codex/gpt-6-astra:max
+    reviewer: openai-codex/gpt-6-astra:max
+    security-reviewer: openai-codex/gpt-6-astra:max
     # Deliberately unchanged: research and mechanical edits gain nothing from
     # max effort and it is the bulk of the token spend.
-    scout: codex/gpt-6.1-sol
-    sonic: codex/gpt-6.1-sol
+    scout: openai-codex/gpt-6.1-sol
+    sonic: openai-codex/gpt-6.1-sol

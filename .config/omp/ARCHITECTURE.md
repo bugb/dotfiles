@@ -1,4 +1,4 @@
-# omp setup: two-vendor plan consensus, sonnet implements, codex reviews
+# omp setup: two-model plan consensus, sol implements, astra reviews
 
 Migrated from a Codex CLI `config.toml` + a Claude Code "call codex to review"
 skill. This file explains why each piece is shaped the way it is, so the
@@ -30,25 +30,40 @@ Two lessons, both encoded below:
 
 ## Model tiers
 
-Every model except Claude runs through the `codex` provider — an API-key gateway
-speaking the plain OpenAI Responses API. It is **not** ChatGPT Codex: omp's
-native `openai-codex` provider targets `chatgpt.com/backend-api/codex/responses`
-over OAuth, and this gateway 404s on those paths. Verified:
+Since 2026-09-30 every model runs through omp's **built-in `openai-codex`
+provider** — ChatGPT Codex over OAuth (`chatgpt.com/backend-api/codex/responses`).
+The apikey.fan gateway providers (`codex`, `claude`) are commented out in
+`models.yml` and kept only for rollback. There is no Claude model any more: the
+Claude-side agents (`plan-claude`, `implementer`) run on `gpt-6.1-sol`, so plan
+consensus is now two different OpenAI models rather than two vendors. That is
+weaker than before — they share training lineage — so lean harder on the
+"running the code is proof" rule below.
 
-| path | result |
-|---|---|
-| `/v1/responses` | 200 |
-| `/v1/codex/responses` | 404 |
-| `/v1/backend-api/codex/responses` | 404 |
+### Authentication
 
-So `api: openai-responses` is correct, not a workaround.
+```bash
+omp login openai-codex-device   # headless / over SSH: prints a code to enter in a browser
+omp login openai-codex          # when a local browser can take the redirect
+~/dotfiles/.config/omp/check-models.sh   # every configured selector must print "ok"
+```
+
+`check-models.sh` exits non-zero and lists what the provider actually serves if
+any selector is missing. `gpt-6.1-sol` was not in omp 18.3.4's built-in catalog
+(which has `gpt-6-astra`, `gpt-6-sol`, `gpt-6-luna`, `gpt-5.6-*`); if the live
+list after login lacks it, swap `gpt-6.1-sol` for `gpt-6-sol` everywhere.
+
+### Rollback to the gateway
+
+Uncomment the `providers:` block in `models.yml` (and drop `providers: {}`),
+then rewrite `openai-codex/` back to `codex/` — and the two Claude-side agents
+to `claude/claude-sonnet-5` — in `config.yml`, `max.yml` and `agents/*.md`.
 
 | role | model | why |
 |---|---|---|
-| `default` | `codex/gpt-6-astra:high` | driver: plans, decides, integrates |
-| `task` | `codex/gpt-5.6-terra` | generic subagents, the cheap bulk |
-| `smol` | `codex/gpt-6.1-sol` | titles, summaries, throwaway lookups |
-| `slow`, `plan` | `codex/gpt-6-astra:high` | deep reasoning on request |
+| `default` | `openai-codex/gpt-6-astra:high` | driver: plans, decides, integrates |
+| `task` | `openai-codex/gpt-5.6-terra` | generic subagents, the cheap bulk |
+| `smol` | `openai-codex/gpt-6.1-sol` | titles, summaries, throwaway lookups |
+| `slow`, `plan` | `openai-codex/gpt-6-astra:high` | deep reasoning on request |
 
 Big model where judgment compounds, cheap models where volume lives. Research
 and mechanical edits (`scout`, `sonic`) stay on `sol` because they are most of
@@ -58,18 +73,15 @@ the token spend and gain nothing from reasoning depth.
 
 | agent | model | writes code? |
 |---|---|---|
-| `plan-codex` | `codex/gpt-6-astra:high` | no |
-| `plan-claude` | `claude/claude-sonnet-5:high` | no |
-| `implementer` | `claude/claude-sonnet-5:high` | yes |
-| `astra-high-review` | `codex/gpt-6-astra:high` | no |
-| `sol-high-review` | `codex/gpt-6.1-sol:high` | no |
+| `plan-codex` | `openai-codex/gpt-6-astra:high` | no |
+| `plan-claude` | `openai-codex/gpt-6.1-sol:high` | no |
+| `implementer` | `openai-codex/gpt-6.1-sol:high` | yes |
+| `astra-high-review` | `openai-codex/gpt-6-astra:high` | no |
+| `sol-high-review` | `openai-codex/gpt-6.1-sol:high` | no |
 
-The reviewer is always the vendor that did **not** write the code.
-
-Claude agents run on Sonnet 5 (`claude-sonnet-5`); Opus is no longer used and its
-models are not registered. The gateway serves no Sonnet 5.5 (`claude-sonnet-5-5`
-returned `model_not_found` on 2026-09-29) — switch when a live request succeeds.
-GPT-6.1 Sol remains the lightweight model.
+The reviewer is always a different model from the one that wrote the code
+(`implementer` = Sol, `astra-high-review` = Astra). With one vendor this is the
+only diversity left, so never point both at the same model.
 
 ### Why the planners default to DISAGREE
 
@@ -137,13 +149,15 @@ fixing* the reviewer's previous finding.
 omp --config ~/.omp/agent/max.yml
 ```
 
-Bumps every thinking stage on both vendors to `max`: planners, implementer,
+Bumps every thinking stage to `max`: planners, implementer,
 reviewers, driver. `scout` and `sonic` deliberately stay on `sol`. Per-run, so
 it never leaks into ordinary work.
 
 ## Secrets
 
-`models.yml` contains no literal key. It resolves one at request time:
+Credentials are omp's own OAuth store from `omp login` (in `agent.db`, never in
+this repo). The disabled gateway block in `models.yml` still shows how a key was
+resolved at request time, without a literal secret:
 
 ```yaml
 apiKey: '!/bin/sed -n "s/.*\"OPENAI_API_KEY\": *\"\([^\"]*\)\".*/\1/p" $HOME/.codex/auth.json'

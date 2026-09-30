@@ -1,7 +1,7 @@
 ---
 name: plan-codex
 description: Codex half of the two-vendor plan consensus. Produces or critiques an implementation plan. Never writes code.
-model: codex/gpt-6-astra:high
+model: openai-codex/gpt-6-astra:high
 tools: read, grep, glob, bash, lsp, hub
 output:
   type: object
