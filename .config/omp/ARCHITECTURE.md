@@ -1,4 +1,4 @@
-# omp setup: two-model plan consensus, sol implements, astra reviews
+# omp setup: Codex plans and reviews, Claude Code writes the code
 
 Migrated from a Codex CLI `config.toml` + a Claude Code "call codex to review"
 skill. This file explains why each piece is shaped the way it is, so the
@@ -6,9 +6,20 @@ reasoning survives when the config is edited six months from now.
 
 ## The idea in one line
 
-Two vendors that fail differently must agree on a plan before code is written,
-the code is then written by one vendor and reviewed by the other, and nothing is
-accepted until it has been executed rather than merely read.
+omp runs on Codex (ChatGPT login) and owns the plan, the orchestration and the
+review. Whenever code has to be written, it hands the slice to the **Claude
+Code CLI**, which writes it; Codex reviews what Claude wrote and sends findings
+back into the same Claude session until review passes. Nothing is accepted
+until it has been executed rather than merely read.
+
+```
+omp driver (openai-codex/gpt-6-astra)
+  plan      plan-codex + plan-claude  (both Codex models today)
+  code      implementer (gpt-6-sol wrapper) --> claude -p --model sonnet
+  review    astra-high-review (Codex)  --CHANGES_REQUIRED-->  implementer
+                                          --resume <session_id>--> same Claude session
+  prove     driver runs the repro / tests
+```
 
 ## Why cross-vendor
 
@@ -30,14 +41,19 @@ Two lessons, both encoded below:
 
 ## Model tiers
 
-Since 2026-09-30 every model runs through omp's **built-in `openai-codex`
+Since 2026-09-30 every omp model runs through omp's **built-in `openai-codex`
 provider** — ChatGPT Codex over OAuth (`chatgpt.com/backend-api/codex/responses`).
 The apikey.fan gateway providers (`codex`, `claude`) are commented out in
-`models.yml` and kept only for rollback. There is no Claude model any more: the
-Claude-side agents (`plan-claude`, `implementer`) run on `gpt-6-sol`, so plan
-consensus is now two different OpenAI models rather than two vendors. That is
-weaker than before — they share training lineage — so lean harder on the
-"running the code is proof" rule below.
+`models.yml` and kept only for rollback.
+
+Claude is not an omp model any more. It is reached only through the Claude
+Code CLI (`claude -p`, Claude's own login in `~/.claude/.credentials.json`),
+and only for writing code. `--model sonnet` is an alias, so it follows the
+newest Sonnet automatically (today `claude-sonnet-5`; Claude Code 2.1.280 did
+not recognise `claude-sonnet-5-5` on 2026-09-30). That keeps the writer and the
+reviewer on different vendors. Planning is the exception: `plan-claude` runs on
+Codex `gpt-6-sol`, so plan consensus is two OpenAI models, which share more
+blind spots than two vendors — lean on the "running the code is proof" rule.
 
 ### Authentication
 
@@ -45,6 +61,7 @@ weaker than before — they share training lineage — so lean harder on the
 omp login openai-codex-device   # headless / over SSH: prints a code to enter in a browser
 omp login openai-codex          # when a local browser can take the redirect
 ~/dotfiles/.config/omp/check-models.sh   # every configured selector must print "ok"
+claude -p "Reply with exactly: ok" --model sonnet --output-format json   # Claude Code logged in
 ```
 
 `check-models.sh` exits non-zero and lists what the provider actually serves if
@@ -55,8 +72,9 @@ any selector is missing. The ChatGPT `prolite` plan served (2026-09-30):
 ### Rollback to the gateway
 
 Uncomment the `providers:` block in `models.yml` (and drop `providers: {}`),
-then rewrite `openai-codex/` back to `codex/` — and the two Claude-side agents
-to `claude/claude-sonnet-5` — in `config.yml`, `max.yml` and `agents/*.md`.
+then rewrite `openai-codex/` back to `codex/` — and `plan-claude` to
+`claude/claude-sonnet-5` — in `config.yml`, `max.yml` and `agents/*.md`.
+`implementer` keeps calling the Claude Code CLI either way.
 
 | role | model | why |
 |---|---|---|
@@ -75,13 +93,21 @@ the token spend and gain nothing from reasoning depth.
 |---|---|---|
 | `plan-codex` | `openai-codex/gpt-6-astra:high` | no |
 | `plan-claude` | `openai-codex/gpt-6-sol:high` | no |
-| `implementer` | `openai-codex/gpt-6-sol:high` | yes |
+| `implementer` | `openai-codex/gpt-6-sol:medium` → **Claude Code CLI** (`claude -p --model sonnet`) | Claude does |
 | `astra-high-review` | `openai-codex/gpt-6-astra:high` | no |
 | `sol-high-review` | `openai-codex/gpt-6-sol:high` | no |
 
-The reviewer is always a different model from the one that wrote the code
-(`implementer` = Sol, `astra-high-review` = Astra). With one vendor this is the
-only diversity left, so never point both at the same model.
+`implementer` never edits files itself. It writes a brief to
+`/tmp/omp-claude-<slice>.md`, runs `claude -p` from the repo root with
+`--permission-mode bypassPermissions --output-format json` (omp already runs
+`approvalMode: yolo`), then checks the result against git rather than trusting
+Claude's summary: HEAD must be unchanged (Claude may not commit) and every
+changed file must be inside the slice. It returns Claude's `session_id`; fix
+rounds pass that back with `--resume <session_id>`, so Claude fixes its own
+change with its context intact instead of a fresh session relearning it.
+
+The reviewer is always a different vendor from the writer: Claude writes,
+Codex (`astra-high-review`) reviews. Never route review to Claude.
 
 ### Why the planners default to DISAGREE
 
@@ -115,9 +141,9 @@ reports instead.
            both disagree   -> task is underspecified, ask the user
            cap: 3 rounds, then report both positions
 
-implementer   writes exactly the settled slice
+implementer   briefs Claude Code, which writes exactly the settled slice
 astra-high-review  peer review -> APPROVE | CHANGES_REQUIRED + findings
-              CHANGES_REQUIRED -> fix -> review the FIXED state again
+              CHANGES_REQUIRED -> implementer --resume <session_id> -> review the FIXED state again
 prove         reproduce, fix, confirm the reproduction stops triggering
 ```
 
@@ -149,8 +175,8 @@ fixing* the reviewer's previous finding.
 omp --config ~/.omp/agent/max.yml
 ```
 
-Bumps every thinking stage to `max`: planners, implementer,
-reviewers, driver. `scout` and `sonic` deliberately stay on `sol`. Per-run, so
+Bumps every thinking stage to `max`: planners, reviewers, driver. `implementer`
+stays on `medium` — it only drives Claude Code, which does the thinking. `scout` and `sonic` deliberately stay on `sol`. Per-run, so
 it never leaks into ordinary work.
 
 ## Secrets

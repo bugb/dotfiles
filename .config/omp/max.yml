@@ -14,7 +14,7 @@ task:
   agentModelOverrides:
     plan-codex: openai-codex/gpt-6-astra:max
     plan-claude: openai-codex/gpt-6-sol:max
-    implementer: openai-codex/gpt-6-sol:max
+    implementer: openai-codex/gpt-6-sol:medium  # drives Claude Code; max buys nothing here
     astra-high-review: openai-codex/gpt-6-astra:max
     reviewer: openai-codex/gpt-6-astra:max
     security-reviewer: openai-codex/gpt-6-astra:max

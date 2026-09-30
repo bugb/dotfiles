@@ -19,11 +19,13 @@ Create a todo list. One item per slice, plus the verification that proves it.
 
 ## 2. Implement in parallel, review in series
 
-Dispatch independent slices as one `tasks[]` batch. Every task instruction must
+Dispatch independent slices as one `tasks[]` batch of `implementer` agents.
+Each one briefs the Claude Code CLI, which writes the code, and reports the
+Claude `session_id` plus the files git says changed. Every task instruction must
 say: skip formatters, skip linters, skip the project test suite. Agents that
 validate mid-flight block on each other's half-finished edits.
 
-dispatch `astra-high-review` on **that slice alone**, while the
+As each implementer reports, dispatch `astra-high-review` on **that slice alone**, while the
 other slices are still being written. Reviewing a small change against a fresh
 context finds more than reviewing the union at the end, and it finds it while
 the decision is still cheap to reverse.
@@ -47,7 +49,8 @@ code outranks a careful read. A fix that only passed review is unverified.
 ## 4. Re-review the fix
 
 The last change you make is the one nobody has looked at. Every time you act on
-findings, dispatch a fresh `astra-high-review` on the fixed state. Loop until it
+findings, send them to `implementer` with that slice's `session_id` so the same
+Claude session fixes them, then dispatch a fresh `astra-high-review` on the fixed state. Loop until it
 approves with zero findings. Do not carry an open finding past a phase boundary.
 
 ## 5. Keep the driver's context clean

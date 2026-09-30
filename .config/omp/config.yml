@@ -28,7 +28,7 @@ task:
   agentModelOverrides:
     plan-codex: openai-codex/gpt-6-astra:high
     plan-claude: openai-codex/gpt-6-sol:high
-    implementer: openai-codex/gpt-6-sol:high
+    implementer: openai-codex/gpt-6-sol:medium  # only drives the Claude Code CLI; Claude writes the code
     astra-high-review: openai-codex/gpt-6-astra:high
     reviewer: openai-codex/gpt-6-astra:high
     security-reviewer: openai-codex/gpt-6-astra:high

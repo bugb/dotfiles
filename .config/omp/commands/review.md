@@ -27,7 +27,9 @@ Give the agent:
 Then act on the result:
 
 - `APPROVE` with no findings → report it and continue.
-- `CHANGES_REQUIRED` → fix every finding, then dispatch a fresh `astra-high-review`
+- `CHANGES_REQUIRED` → send every finding to `implementer` (with the Claude
+  `session_id` of the slice that produced the code, so the same session fixes
+  it), then dispatch a fresh `astra-high-review`
   on the fixed state. Repeat until it approves. Do not argue with a finding you
   have not first verified in the code; if it is genuinely wrong, say why with
   evidence and move on.

@@ -1,5 +1,5 @@
 ---
-description: Two-vendor plan consensus — codex and claude must agree before any code is written
+description: Plan consensus — plan-codex and plan-claude must agree before any code is written
 ---
 
 Produce a plan for $ARGUMENTS that both vendors independently ratify.
@@ -34,9 +34,9 @@ finding: report both positions with their evidence and let the user decide.
 ## After consensus
 
 Write the settled plan to `local://plan.md` and build a todo list from it, one
-item per slice plus its verification. Then implement with `implementer` and
-peer-review with `astra-high-review` — the vendor that did not write the code
-reviews it.
+item per slice plus its verification. Then implement with `implementer` (the
+Claude Code CLI writes the code) and peer-review with `astra-high-review` —
+Codex reviews what Claude wrote.
 
 Never skip straight from a single model's plan to implementation. The whole point
 is that the two vendors fail differently.
