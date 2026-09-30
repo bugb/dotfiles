@@ -46,8 +46,8 @@ providers:
           output: 0
           cacheRead: 0
           cacheWrite: 0
-      - id: gpt-6-sol
-        name: GPT-6 Sol (codex)
+      - id: gpt-6.1-sol
+        name: GPT-6.1 Sol (codex)
         reasoning: true
         input: [text, image]
         contextWindow: 1000000

@@ -1,7 +1,7 @@
 ---
 name: sol-high-review
-description: Fast, cheaper Codex review on Sol-6 for small/low-risk changes (typos, config tweaks, isolated one-file edits, docs). Same read-only contract as astra-high-review. Use astra-high-review (Astra-high) instead for anything touching money movement, auth, concurrency, or multi-file surface area.
-model: codex/gpt-6-sol:high
+description: Fast, cheaper Codex review on Sol-6.1 for small/low-risk changes (typos, config tweaks, isolated one-file edits, docs). Same read-only contract as astra-high-review. Use astra-high-review (Astra-high) instead for anything touching money movement, auth, concurrency, or multi-file surface area.
+model: codex/gpt-6.1-sol:high
 tools: read, grep, glob, bash, lsp, hub
 output:
   type: object

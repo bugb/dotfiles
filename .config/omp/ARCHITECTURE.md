@@ -47,7 +47,7 @@ So `api: openai-responses` is correct, not a workaround.
 |---|---|---|
 | `default` | `codex/gpt-6-astra:high` | driver: plans, decides, integrates |
 | `task` | `codex/gpt-5.6-terra` | generic subagents, the cheap bulk |
-| `smol` | `codex/gpt-6-sol` | titles, summaries, throwaway lookups |
+| `smol` | `codex/gpt-6.1-sol` | titles, summaries, throwaway lookups |
 | `slow`, `plan` | `codex/gpt-6-astra:high` | deep reasoning on request |
 
 Big model where judgment compounds, cheap models where volume lives. Research
@@ -62,14 +62,14 @@ the token spend and gain nothing from reasoning depth.
 | `plan-claude` | `claude/claude-sonnet-5:high` | no |
 | `implementer` | `claude/claude-sonnet-5:high` | yes |
 | `astra-high-review` | `codex/gpt-6-astra:high` | no |
-| `sol-high-review` | `codex/gpt-6-sol:high` | no |
+| `sol-high-review` | `codex/gpt-6.1-sol:high` | no |
 
 The reviewer is always the vendor that did **not** write the code.
 
 Claude agents run on Sonnet 5 (`claude-sonnet-5`); Opus is no longer used and its
 models are not registered. The gateway serves no Sonnet 5.5 (`claude-sonnet-5-5`
 returned `model_not_found` on 2026-09-29) — switch when a live request succeeds.
-GPT-6 Sol remains the lightweight model.
+GPT-6.1 Sol remains the lightweight model.
 
 ### Why the planners default to DISAGREE
 
