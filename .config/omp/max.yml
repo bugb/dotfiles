@@ -13,12 +13,12 @@ defaultThinkingLevel: max
 task:
   agentModelOverrides:
     plan-codex: openai-codex/gpt-6-astra:max
-    plan-claude: openai-codex/gpt-6.1-sol:max
-    implementer: openai-codex/gpt-6.1-sol:max
+    plan-claude: openai-codex/gpt-6-sol:max
+    implementer: openai-codex/gpt-6-sol:max
     astra-high-review: openai-codex/gpt-6-astra:max
     reviewer: openai-codex/gpt-6-astra:max
     security-reviewer: openai-codex/gpt-6-astra:max
     # Deliberately unchanged: research and mechanical edits gain nothing from
     # max effort and it is the bulk of the token spend.
-    scout: openai-codex/gpt-6.1-sol
-    sonic: openai-codex/gpt-6.1-sol
+    scout: openai-codex/gpt-6-sol
+    sonic: openai-codex/gpt-6-sol

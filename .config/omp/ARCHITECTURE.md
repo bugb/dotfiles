@@ -34,7 +34,7 @@ Since 2026-09-30 every model runs through omp's **built-in `openai-codex`
 provider** — ChatGPT Codex over OAuth (`chatgpt.com/backend-api/codex/responses`).
 The apikey.fan gateway providers (`codex`, `claude`) are commented out in
 `models.yml` and kept only for rollback. There is no Claude model any more: the
-Claude-side agents (`plan-claude`, `implementer`) run on `gpt-6.1-sol`, so plan
+Claude-side agents (`plan-claude`, `implementer`) run on `gpt-6-sol`, so plan
 consensus is now two different OpenAI models rather than two vendors. That is
 weaker than before — they share training lineage — so lean harder on the
 "running the code is proof" rule below.
@@ -48,9 +48,9 @@ omp login openai-codex          # when a local browser can take the redirect
 ```
 
 `check-models.sh` exits non-zero and lists what the provider actually serves if
-any selector is missing. `gpt-6.1-sol` was not in omp 18.3.4's built-in catalog
-(which has `gpt-6-astra`, `gpt-6-sol`, `gpt-6-luna`, `gpt-5.6-*`); if the live
-list after login lacks it, swap `gpt-6.1-sol` for `gpt-6-sol` everywhere.
+any selector is missing. The ChatGPT `prolite` plan served (2026-09-30):
+`gpt-5.5`, `gpt-5.6-{luna,sol,terra}`, `gpt-6-{astra,luna,sol}` — no
+`gpt-6.1-sol`, so the Sol roles use `gpt-6-sol`.
 
 ### Rollback to the gateway
 
@@ -62,7 +62,7 @@ to `claude/claude-sonnet-5` — in `config.yml`, `max.yml` and `agents/*.md`.
 |---|---|---|
 | `default` | `openai-codex/gpt-6-astra:high` | driver: plans, decides, integrates |
 | `task` | `openai-codex/gpt-5.6-terra` | generic subagents, the cheap bulk |
-| `smol` | `openai-codex/gpt-6.1-sol` | titles, summaries, throwaway lookups |
+| `smol` | `openai-codex/gpt-6-sol` | titles, summaries, throwaway lookups |
 | `slow`, `plan` | `openai-codex/gpt-6-astra:high` | deep reasoning on request |
 
 Big model where judgment compounds, cheap models where volume lives. Research
@@ -74,10 +74,10 @@ the token spend and gain nothing from reasoning depth.
 | agent | model | writes code? |
 |---|---|---|
 | `plan-codex` | `openai-codex/gpt-6-astra:high` | no |
-| `plan-claude` | `openai-codex/gpt-6.1-sol:high` | no |
-| `implementer` | `openai-codex/gpt-6.1-sol:high` | yes |
+| `plan-claude` | `openai-codex/gpt-6-sol:high` | no |
+| `implementer` | `openai-codex/gpt-6-sol:high` | yes |
 | `astra-high-review` | `openai-codex/gpt-6-astra:high` | no |
-| `sol-high-review` | `openai-codex/gpt-6.1-sol:high` | no |
+| `sol-high-review` | `openai-codex/gpt-6-sol:high` | no |
 
 The reviewer is always a different model from the one that wrote the code
 (`implementer` = Sol, `astra-high-review` = Astra). With one vendor this is the

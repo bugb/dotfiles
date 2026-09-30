@@ -1,7 +1,7 @@
 ---
 name: implementer
-description: Writes the code for an already-agreed plan slice. GPT-6.1 Sol at high. Implements exactly the agreed scope, no more.
-model: openai-codex/gpt-6.1-sol:high
+description: Writes the code for an already-agreed plan slice. GPT-6 Sol at high. Implements exactly the agreed scope, no more.
+model: openai-codex/gpt-6-sol:high
 tools: read, write, edit, grep, glob, bash, lsp, ast_edit, hub, todo
 ---
 

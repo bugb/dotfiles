@@ -1,7 +1,7 @@
 ---
 name: plan-claude
 description: Claude half of the two-vendor plan consensus. Produces or critiques an implementation plan. Never writes code.
-model: openai-codex/gpt-6.1-sol:high
+model: openai-codex/gpt-6-sol:high
 tools: read, grep, glob, bash, lsp, hub
 output:
   type: object

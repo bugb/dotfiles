@@ -1,7 +1,7 @@
 modelRoles:
   default: openai-codex/gpt-6-astra:high
   task: openai-codex/gpt-5.6-terra
-  smol: openai-codex/gpt-6.1-sol
+  smol: openai-codex/gpt-6-sol
   slow: openai-codex/gpt-6-astra:high
   plan: openai-codex/gpt-6-astra:high
 symbolPreset: unicode
@@ -27,13 +27,13 @@ task:
   maxConcurrency: 6
   agentModelOverrides:
     plan-codex: openai-codex/gpt-6-astra:high
-    plan-claude: openai-codex/gpt-6.1-sol:high
-    implementer: openai-codex/gpt-6.1-sol:high
+    plan-claude: openai-codex/gpt-6-sol:high
+    implementer: openai-codex/gpt-6-sol:high
     astra-high-review: openai-codex/gpt-6-astra:high
     reviewer: openai-codex/gpt-6-astra:high
     security-reviewer: openai-codex/gpt-6-astra:high
-    scout: openai-codex/gpt-6.1-sol
-    sonic: openai-codex/gpt-6.1-sol
+    scout: openai-codex/gpt-6-sol
+    sonic: openai-codex/gpt-6-sol
 github:
   enabled: true
 statusLine:
