@@ -13,7 +13,7 @@ back into the same Claude session until review passes. Nothing is accepted
 until it has been executed rather than merely read.
 
 ```
-omp driver (openai-codex/gpt-6-astra)
+omp driver (openai-codex/gpt-6.1-sol)
   plan      plan-codex + plan-claude  (both Codex models today)
   code      implementer (gpt-6-sol wrapper) --> claude -p --model claude-sonnet-5-5
   review    astra-high-review (Codex)  --CHANGES_REQUIRED-->  implementer
@@ -65,9 +65,11 @@ claude -p "Reply with exactly: ok" --model claude-sonnet-5-5 --output-format jso
 ```
 
 `check-models.sh` exits non-zero and lists what the provider actually serves if
-any selector is missing. The ChatGPT `prolite` plan served (2026-09-30):
-`gpt-5.5`, `gpt-5.6-{luna,sol,terra}`, `gpt-6-{astra,luna,sol}` — no
-`gpt-6.1-sol`, so the Sol roles use `gpt-6-sol`.
+any selector is missing. The ChatGPT `prolite` plan serves (2026-09-30):
+`gpt-5.5`, `gpt-5.6-{luna,sol,terra}`, `gpt-6-{astra,luna,sol}` and
+`gpt-6.1-sol`. `gpt-6.1-sol` needs **omp ≥ 18.4.4** — 18.3.4's catalog lacked
+it and reported the selector missing. Update with `omp update` (it needs
+`~/.local/bin` on `PATH`).
 
 ### Rollback to the gateway
 
@@ -78,7 +80,7 @@ then rewrite `openai-codex/` back to `codex/` — and `plan-claude` to
 
 | role | model | why |
 |---|---|---|
-| `default` | `openai-codex/gpt-6-astra:high` | driver: plans, decides, integrates |
+| `default` | `openai-codex/gpt-6.1-sol:high` | driver: plans, decides, integrates; the model every session starts on |
 | `task` | `openai-codex/gpt-5.6-terra` | generic subagents, the cheap bulk |
 | `smol` | `openai-codex/gpt-6-sol` | titles, summaries, throwaway lookups |
 | `slow`, `plan` | `openai-codex/gpt-6-astra:high` | deep reasoning on request |
