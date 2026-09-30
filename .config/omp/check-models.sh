@@ -30,7 +30,11 @@ done <<<"$wanted"
 if [ "$missing" -ne 0 ]; then
   echo
   echo "Served by logged-in providers:"
-  sed 's/^/  /' <<<"$available"
+  if [ -z "$available" ]; then
+    echo "  (none: not logged in; run '$omp_bin login openai-codex-device')"
+  else
+    sed 's/^/  /' <<<"$available"
+  fi
   echo "Replace each MISSING selector in config.yml / max.yml / agents/*.md with one listed above."
 fi
 exit "$missing"
