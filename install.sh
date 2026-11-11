@@ -25,6 +25,7 @@ LINK_I3=0
 LINK_OMP=0
 LINK_TMUX=0
 STATUS_ONLY=0
+RELINK_ONLY=0
 ASSUME_YES=0
 
 # OS_NAME/PKG_MGR are normally detected. DOTFILES_FORCE_OS and
@@ -64,6 +65,9 @@ Re-runnable; replaced files are backed up rather than deleted.
 Options:
   -s, --status       Show which managed paths are linked to this repo, then exit.
   -n, --dry-run      Print what would happen, change nothing.
+      --relink       Only link new manifest entries of groups this machine
+                     already uses. Never moves or replaces a file. sync.sh
+                     runs this after each pull.
       --no-deps      Skip package installation, only link and bootstrap.
       --with-lsp     Also install the language servers the config looks for
                      (pylsp, typescript-language-server, gopls).
@@ -105,6 +109,7 @@ while [ $# -gt 0 ]; do
     --link-omp)    LINK_OMP=1 ;;
     --link-tmux)   LINK_TMUX=1 ;;
     -s|--status)   STATUS_ONLY=1 ;;
+    --relink)      RELINK_ONLY=1 ;;
     --all)         WITH_LSP=1; LINK_SHELL=1; LINK_GIT=1; LINK_KITTY=1; LINK_I3=1; LINK_OMP=1; LINK_TMUX=1 ;;
     -y|--yes)      ASSUME_YES=1 ;;
     -h|--help)     usage; exit 0 ;;
@@ -361,6 +366,53 @@ link_group() {
 $(manifest)
 EOF
   return $found
+}
+
+# A group is in use on this machine when one of its entries is linked to this
+# repo. claude always is: it carries the shared Claude Code rules, which every
+# machine should load.
+group_in_use() {
+  local want="$1" group src dest
+  [ "$want" != "claude" ] || return 0
+  while IFS='|' read -r group src dest; do
+    [ "$group" = "$want" ] || continue
+    if [ -L "$dest" ] && [ "$(readlink "$dest")" = "$REPO_DIR/$src" ]; then
+      return 0
+    fi
+  done <<EOF
+$(manifest)
+EOF
+  return 1
+}
+
+# The unattended half of the installer, run by sync.sh after a pull. It links
+# only entries that are new and only in groups this machine already uses, and it
+# never moves or replaces an existing path: it reports it instead. So a sync can
+# add a file a machine has opted into, but it cannot break one.
+relink() {
+  local group src dest current
+  while IFS='|' read -r group src dest; do
+    group_in_use "$group" || continue
+    if [ ! -e "$REPO_DIR/$src" ]; then
+      warn "missing in repo, skipped: $src"
+      continue
+    fi
+    if [ -L "$dest" ]; then
+      current="$(readlink "$dest")"
+      [ "$current" = "$REPO_DIR/$src" ] && continue
+      warn "$dest links to $current, left as is"
+      continue
+    fi
+    if [ -e "$dest" ]; then
+      warn "$dest exists and is not a link, left as is (run ./install.sh to adopt it)"
+      continue
+    fi
+    run mkdir -p "$(dirname "$dest")"
+    run ln -s "$REPO_DIR/$src" "$dest"
+    ok "$dest -> $REPO_DIR/$src (new)"
+  done <<EOF
+$(manifest)
+EOF
 }
 
 # What the repo owns versus what is actually on this machine.
@@ -785,6 +837,11 @@ main() {
   if [ "$STATUS_ONLY" -eq 1 ]; then
     detect_platform
     show_status
+    exit 0
+  fi
+
+  if [ "$RELINK_ONLY" -eq 1 ]; then
+    relink
     exit 0
   fi
 
