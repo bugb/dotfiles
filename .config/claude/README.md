@@ -27,6 +27,17 @@ preferences and anything Claude Code writes to it itself.
 Requirements: `python3` (standard library only), `git`, and `curl` for the
 weather. Nothing else.
 
+## Shared rules
+
+`rules/` holds instructions that every Claude Code session on every machine
+loads, such as the reply writing style. `install.sh` links the folder to
+`~/.claude/rules/shared`. Claude Code reads every `.md` file under
+`~/.claude/rules/`, including through that link, at session start.
+
+Add a shared rule as a new `.md` file in `rules/`. Put a rule for one machine
+only as a plain file in `~/.claude/rules/` on that machine, or in its
+`~/.claude/CLAUDE.md`. Neither of those is tracked.
+
 ## What it shows
 
 | Segment | Notes |
