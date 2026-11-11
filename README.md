@@ -12,6 +12,7 @@ cd dotfiles
 ./install.sh --with-lsp   # and the language servers
 ./install.sh --status     # what is linked on this machine
 ./install.sh --dry-run    # show every action, change nothing
+./sync.sh --install-schedule  # pull and relink every hour from now on
 ```
 
 Works on macOS (Homebrew), Arch (pacman), Debian/Ubuntu (apt) and Fedora (dnf).
@@ -30,6 +31,10 @@ Machine-specific config goes in `~/.zshrc.d/*.zsh` and secrets in
 `~/.privatealiases` (mode 0600). Neither is tracked, which is what keeps the
 shared `.zshrc` safe to symlink out of a public repo.
 
+Every machine stays current through `./sync.sh`, run hourly once scheduled. It
+only fast-forwards to `origin/main` and only adds new links, so it cannot
+rewrite local work or replace a file. Check it with `./sync.sh --status`.
+
 Full detail, with diagrams: **[ARCHITECTURE.md](ARCHITECTURE.md)**.
 
 ## Contents
@@ -41,7 +46,9 @@ Full detail, with diagrams: **[ARCHITECTURE.md](ARCHITECTURE.md)**.
 | `.gitconfig` | git, with delta as the pager |
 | `.config/kitty/` | terminal |
 | `.config/i3/`, `.config/i3blocks/` | window manager, Linux only |
+| `.config/claude/` | Claude Code status line and shared rules |
 | `install.sh` | the installer |
+| `sync.sh` | hourly pull + relink, safe to run unattended |
 
 ## Docs
 
