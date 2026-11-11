@@ -1,5 +1,5 @@
 modelRoles:
-  default: openai-codex/gpt-6.1-sol:high
+  default: openai-codex/gpt-5.6-terra:high
   task: openai-codex/gpt-5.6-terra
   smol: openai-codex/gpt-6-sol
   slow: openai-codex/gpt-6-astra:high
@@ -28,7 +28,7 @@ task:
   agentModelOverrides:
     plan-codex: openai-codex/gpt-6-astra:high
     plan-claude: openai-codex/gpt-6-sol:high
-    implementer: openai-codex/gpt-6-sol:medium  # only drives the Claude Code CLI; Claude writes the code
+    implementer: openai-codex/gpt-6-sol:medium
     astra-high-review: openai-codex/gpt-6-astra:high
     reviewer: openai-codex/gpt-6-astra:high
     security-reviewer: openai-codex/gpt-6-astra:high
