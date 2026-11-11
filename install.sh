@@ -334,6 +334,7 @@ manifest() {
   cat <<EOF
 nvim|.config/nvim|$HOME/.config/nvim
 claude|.config/claude/statusline.py|$HOME/.claude/statusline.py
+claude|.config/claude/rules|$HOME/.claude/rules/shared
 shell|.zshrc|$HOME/.zshrc
 shell|.aliases|$HOME/.aliases
 git|.gitconfig|$HOME/.gitconfig
