@@ -25,14 +25,11 @@ omp driver (openai-codex/gpt-6.1-sol)
 
 Same-model review shares the reviewer's blind spots with the author's.
 
-This is not theoretical. During the Rust port of this repo's trading bot, a
-reviewer found a partial-candle bug: bar finality was decided by
-`close_time < now`. The fix — snapshot the clock *before* the request — read
-correctly, reviewed clean, and was still wrong. A live boundary test showed the
-bot ingesting the 14:40 bar at `85863.90` when its true close was `85855.70`,
-because our clock can run ahead of the exchange's. Only execution exposed it.
-The real fix was structural: Binance's newest returned kline is the in-progress
-one, so everything behind it is provably closed — no clock involved.
+This is not theoretical. In an earlier project, a reviewer found a time-boundary
+bug. The first fix read correctly, reviewed clean, and was still wrong: only a
+live test showed it, because the local clock can run ahead of the remote
+service's clock. The real fix was structural: decide what is complete from the
+remote service's own data, so no clock is involved.
 
 Two lessons, both encoded below:
 
@@ -208,7 +205,7 @@ to commit. Two details in that line are deliberate:
 |---|---|
 | `review_model = "gpt-5.6-astra"` | no such model on the gateway at migration; reviewers use `gpt-6-astra`. |
 | `mcp_servers.github` | `/root/.local/bin/github-mcp-codex` does not exist here; omp's native `github` tool is enabled instead. |
-| `[projects."/root/poly-rust"]` | directory does not exist; `approvalMode: yolo` covers trust anyway. |
+| `[projects."<path>"]` entries | the directories do not exist on this host; `approvalMode: yolo` covers trust anyway. |
 | `windows_wsl_setup_acknowledged`, `network_access`, `tui.model_availability_nux`, `notice.hide_rate_limit_model_nudge` | no omp equivalent; they are Codex-TUI bookkeeping, not behaviour. |
 
 Everything else mapped: `model_context_window` → `contextWindow`,
