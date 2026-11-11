@@ -128,6 +128,29 @@ Properties worth knowing:
 - **bash 3.2 compatible**, which is what macOS ships. No associative arrays, no
   `mapfile`, no `${var,,}`.
 
+### Keeping machines in sync
+
+`./sync.sh` is the unattended half. `./sync.sh --install-schedule` runs it every
+hour, through launchd on macOS and a systemd timer on Linux. Each run:
+
+1. fetches `origin/main`, over HTTPS for a public GitHub repo if SSH fails, so
+   it does not need an SSH agent;
+2. fast-forwards only. Diverged history, a different branch or a local change
+   that conflicts with an incoming commit stops the run and is logged. It never
+   rebases, stashes, resets or commits;
+3. runs `./install.sh --relink`: new manifest entries are linked in groups the
+   machine already uses (`claude` always), and an existing file is never moved
+   or replaced.
+
+So a new managed file reaches every machine that uses its group within the
+hour, and a new machine needs only `./install.sh` (plus its opt-in groups) and
+`./sync.sh --install-schedule`. `./sync.sh --status` shows the last results.
+
+One habit keeps it green: commit config that a tool writes through a link
+(`:Lazy` updating `lazy-lock.json`, `omp config set` updating
+`.config/omp/config.yml`). A change left uncommitted blocks only the incoming
+commits that touch the same file, and the log names it.
+
 ## 4. Neovim
 
 Plugins are managed by [lazy.nvim](https://github.com/folke/lazy.nvim). This is
